@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Addition Game - Debug Version</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+        min-height: 100vh;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+      }
+      h1 {
+        color: #2c3e50;
+        text-align: center;
+      }
+      .status {
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 5px;
+      }
+      .success {
+        background: #d4edda;
+        color: #155724;
+      }
+      .error {
+        background: #f8d7da;
+        color: #721c24;
+      }
+      button {
+        padding: 10px 20px;
+        margin: 5px;
+        border: none;
+        border-radius: 5px;
+        background: #007bff;
+        color: white;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #0056b3;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🎮 Addition Game - Debug Version</h1>
+
+      <div id="status" class="status">
+        <p>Initializing...</p>
+      </div>
+
+      <div id="main-content" style="display: none">
+        <h2>👤 User Selection</h2>
+        <div>
+          <label for="user-select">Select User:</label>
+          <select id="user-select">
+            <option value="">Loading users...</option>
+          </select>
+          <button id="new-user-btn">➕ New User</button>
+          <button id="refresh-btn">🔄 Refresh</button>
+        </div>
+
+        <div>
+          <label>Current User: </label>
+          <span id="current-user">No user selected</span>
+          <button id="clear-user-btn">Clear User</button>
+        </div>
+
+        <h2>🎮 Games</h2>
+        <div>
+          <button id="game1-btn" onclick="startGame(0)">
+            🔢 Number Recognition
+          </button>
+          <button id="game2-btn" onclick="startGame(1)">
+            ➕ Simple Addition
+          </button>
+        </div>
+      </div>
+
+      <div id="error-content" style="display: none">
+        <h2>❌ Error</h2>
+        <p>
+          There was an issue loading the application. Please check the console
+          for details.
+        </p>
+        <button onclick="location.reload()">🔄 Reload Page</button>
+      </div>
+    </div>
+
+    <script>
+      console.log("Debug version started");
+
+      let currentUserId = null;
+      let currentUserName = null;
+
+      function log(message) {
+        console.log(message);
+        const status = document.getElementById("status");
+        if (status) {
+          status.innerHTML = '<p class="success">✅ ' + message + "</p>";
+        }
+      }
+
+      function error(message) {
+        console.error(message);
+        const status = document.getElementById("status");
+        if (status) {
+          status.innerHTML = '<p class="error">❌ ' + message + "</p>";
+        }
+        document.getElementById("error-content").style.display = "block";
+      }
+
+      async function loadUsers() {
+        log("Loading users...");
+        try {
+          const result = await api.getUsers();
+          if (!result.success) {
+            throw new Error(result.error || "Failed to load users");
+          }
+
+          const users = result.users;
+          const select = document.getElementById("user-select");
+
+          select.innerHTML = '<option value="">Select a user...</option>';
+          users.forEach((user) => {
+            const option = document.createElement("option");
+            option.value = user.id;
+            option.textContent = user.name;
+            select.appendChild(option);
+          });
+
+          log(`Loaded ${users.length} users successfully`);
+          document.getElementById("main-content").style.display = "block";
+        } catch (err) {
+          error(`Failed to load users: ${err.message}`);
+        }
+      }
+
+      async function selectUser(userId) {
+        if (!userId) {
+          currentUserId = null;
+          currentUserName = null;
+          document.getElementById("current-user").textContent =
+            "No user selected";
+          return;
+        }
+
+        try {
+          log("Loading user details...");
+          const result = await api.getUser(userId);
+          if (!result.success) {
+            throw new Error(result.error || "Failed to load user");
+          }
+
+          const user = result.user;
+          currentUserId = user.id;
+          currentUserName = user.username;
+          document.getElementById("current-user").textContent = user.username;
+          log(`Selected user: ${user.username}`);
+        } catch (err) {
+          error(`Failed to select user: ${err.message}`);
+        }
+      }
+
+      async function createNewUser() {
+        const name = prompt("Enter new user name:");
+        if (!name || name.trim() === "") {
+          return;
+        }
+
+        try {
+          log("Creating new user...");
+          const result = await api.createUser({ username: name.trim() });
+
+          if (!result.success) {
+            throw new Error(result.error || "Failed to create user");
+          }
+
+          const newUser = result;
+          await loadUsers();
+          document.getElementById("user-select").value = newUser.user.id;
+          await selectUser(newUser.user.id);
+        } catch (err) {
+          error(`Failed to create user: ${err.message}`);
+        }
+      }
+
+      function startGame(gameId) {
+        if (!currentUserId) {
+          alert("Please select a user first!");
+          return;
+        }
+
+        log(`Starting game ${gameId} for user ${currentUserName}`);
+        // In a real implementation, this would switch to the game screen
+        alert(`Game ${gameId} would start here for ${currentUserName}!`);
+      }
+
+      // Event listeners
+      document.addEventListener("DOMContentLoaded", function () {
+        console.log("DOM loaded, initializing...");
+
+        document
+          .getElementById("user-select")
+          .addEventListener("change", function (e) {
+            selectUser(e.target.value);
+          });
+
+        document
+          .getElementById("new-user-btn")
+          .addEventListener("click", createNewUser);
+
+        document
+          .getElementById("refresh-btn")
+          .addEventListener("click", loadUsers);
+
+        document
+          .getElementById("clear-user-btn")
+          .addEventListener("click", function () {
+            document.getElementById("user-select").value = "";
+            selectUser("");
+          });
+
+        // Start loading
+        loadUsers();
+      });
+    </script>
+    <script src="local-storage-api.js"></script>
+  </body>
+</html>

@@ -1,0 +1,357 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Cache-Control"
+      content="no-cache, no-store, must-revalidate"
+    />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>Numbers</title>
+    <!-- Load external CSS -->
+    <link rel="stylesheet" href="main.css" />
+  </head>
+  <body>
+    <div id="app">
+      <!-- Interaction prompt overlay -->
+      <div id="interaction-prompt">
+        <div class="interaction-content">
+          <h2>🎮 Click to Start!</h2>
+          <p id="interaction-message">
+            Click anywhere to begin the Addition Game
+          </p>
+        </div>
+      </div>
+
+      <header>
+        <h1>Addition Game - Have FUN!</h1>
+      </header>
+      <main>
+        <!-- Welcome/game Selection Screen -->
+        <div id="welcome-screen" class="screen">
+          <div class="game-selection">
+            <h2>🎮 Choose Your game!</h2>
+            <div class="personalize">
+              <div class="user-selection-section">
+                <label for="user-select">👤 Select User:</label>
+                <div class="user-selection-controls">
+                  <select id="user-select" class="user-dropdown">
+                    <option value="">Loading users...</option>
+                  </select>
+                  <button id="new-user-btn" type="button" class="game-btn small">➕ New User</button>
+                  <button id="refresh-users-btn" type="button" class="game-btn small">🔄 Refresh</button>
+                </div>
+              </div>
+              <div class="current-user-section">
+                <label for="user-name">Current User:</label>
+                <span class="user-name-display" id="user-name-display"
+                  >No user selected</span
+                >
+                <!-- <button id="speak-name-btn" type="button">🎤 Speak Name</button> -->
+                <button id="clear-user-name-btn" type="button">Clear User</button>
+              </div>
+            </div>
+            <div class="game-grid">
+              <div class="game-card" data-game="0">
+                <div class="game-icon">🔢</div>
+                <div class="game-name">beginners</div>
+                <div class="game-title">Number Recognition</div>
+                <div class="game-desc">Touch the number you hear!</div>
+                <button class="game-btn" type="button">Start Playing!</button>
+              </div>
+              <div class="game-card" data-game="1">
+                <div class="game-icon">➕</div>
+                <div class="game-name">SimpleAddition</div>
+                <div class="game-title">Single Digit Addition</div>
+                <div class="game-desc">Add two numbers (0-9)</div>
+                <button class="game-btn" type="button">Start Playing!</button>
+              </div>
+            </div>
+            <div class="welcome-settings">
+              <h3>⚙️ Settings</h3>
+              <div class="settings-grid">
+                <div class="setting-item">
+                  <label for="quiet-mode">🔇 Quiet Mode:</label>
+                  <input type="checkbox" id="quiet-mode" />
+                </div>
+                <div class="setting-item">
+                  <label for="difficulty-game">📊 Difficulty:</label>
+                  <select id="difficulty-game">
+                    <option value="easy">Easy</option>
+                    <option value="medium">Medium</option>
+                    <option value="hard">Hard</option>
+                  </select>
+                </div>
+                <div class="setting-item">
+                  <label for="theme-select">🎨 Theme:</label>
+                  <select id="theme-select">
+                    <option value="auto">🌓 Auto (System)</option>
+                    <option value="light">☀️ Light</option>
+                    <option value="dark">🌙 Dark</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- beginners Game Screen -->
+        <div id="beginners-screen" class="screen hidden">
+          <div class="beginners-container">
+            <div class="game-header">
+              <div class="game-info">
+                <div class="current-game">
+                  <span class="game-icon">🔤</span>
+                  <span>beginners: Number Recognition</span>
+                  <span id="beginners-user-name" class="user-name-display"
+                    >Not Entered</span
+                  >
+                </div>
+                <button
+                  id="beginners-back-btn"
+                  class="game-btn secondary small"
+                  type="button"
+                >
+                  🔙 Back
+                </button>
+              </div>
+              <div class="stats-row">
+                <div class="stat-item">
+                  <div class="stat-icon">✅</div>
+                  <div class="stat-label">Correct</div>
+                  <div class="stat-value" id="beginners-correct">0</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-icon">❌</div>
+                  <div class="stat-label">Wrong</div>
+                  <div class="stat-value" id="beginners-wrong">0</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-icon">🎯</div>
+                  <div class="stat-label">Accuracy</div>
+                  <div class="stat-value" id="beginners-accuracy">100%</div>
+                </div>
+              </div>
+            </div>
+            <div class="instruction-area">
+              <div class="instruction-text" id="beginners-instruction">
+                Touch a number and I will tell you what it is.
+              </div>
+              <button
+                id="beginners-mode-btn"
+                class="game-btn secondary small"
+                type="button"
+              >
+                Mode: Practice (Switch to Test Mode)
+              </button>
+            </div>
+            <div class="game-controls">
+              <button
+                id="beginners-hint-btn"
+                class="game-btn hint"
+                type="button"
+              >
+                💡 Hint
+              </button>
+            </div>
+            <div class="scoring-display">
+              <div class="scoring-array hits-array">
+                <div class="array-title">Tries Array</div>
+                <div class="array-content" id="beginners-hits-display">[]</div>
+              </div>
+              <div class="scoring-array errors-array">
+                <div class="array-title">Errors Array</div>
+                <div class="array-content" id="beginners-errors-display">
+                  []
+                </div>
+              </div>
+            </div>
+            <div class="number-grid" id="beginners-number-grid">
+              <div class="number-tile" data-number="0">
+                <div class="number-display">0</div>
+              </div>
+              <div class="number-tile" data-number="1">
+                <div class="number-display">1</div>
+              </div>
+              <div class="number-tile" data-number="2">
+                <div class="number-display">2</div>
+              </div>
+              <div class="number-tile" data-number="3">
+                <div class="number-display">3</div>
+              </div>
+              <div class="number-tile" data-number="4">
+                <div class="number-display">4</div>
+              </div>
+              <div class="number-tile" data-number="5">
+                <div class="number-display">5</div>
+              </div>
+              <div class="number-tile" data-number="6">
+                <div class="number-display">6</div>
+              </div>
+              <div class="number-tile" data-number="7">
+                <div class="number-display">7</div>
+              </div>
+              <div class="number-tile" data-number="8">
+                <div class="number-display">8</div>
+              </div>
+              <div class="number-tile" data-number="9">
+                <div class="number-display">9</div>
+              </div>
+            </div>
+            <div class="feedback-area" id="beginners-feedback-area"></div>
+            <button id="beginners-reset-btn">Reset Stats</button>
+          </div>
+        </div>
+        <!-- SimpleAddition Game Screen -->
+        <div id="SimpleAddition-screen" class="screen hidden">
+          <div class="SimpleAddition-container">
+            <div class="game-header">
+              <div class="game-info">
+                <div class="current-game">
+                  <span class="game-icon">➕</span>
+                  <span>SimpleAddition: Addition</span>
+                  <span id="SimpleAddition-user-name" class="user-name-display"
+                    >Not Entered</span
+                  >
+                </div>
+                <button
+                  id="SimpleAddition-back-btn"
+                  class="game-btn secondary small"
+                  type="button"
+                >
+                  🔙 Back
+                </button>
+              </div>
+              <div class="stats-row">
+                <div class="stat-item">
+                  <div class="stat-icon">✅</div>
+                  <div class="stat-label">Correct</div>
+                  <div class="stat-value" id="SimpleAddition-correct">0</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-icon">❌</div>
+                  <div class="stat-label">Wrong</div>
+                  <div class="stat-value" id="SimpleAddition-wrong">0</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-icon">🎯</div>
+                  <div class="stat-label">Accuracy</div>
+                  <div class="stat-value" id="SimpleAddition-accuracy">
+                    100%
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="problem-container">
+              <div class="problem-display">
+                <div class="number" id="SimpleAddition-num1">5</div>
+                <div class="operator">+</div>
+                <div class="number" id="SimpleAddition-num2">3</div>
+                <div class="equals">=</div>
+                <div class="answer-input-container">
+                  <input
+                    type="number"
+                    id="SimpleAddition-answer-input"
+                    class="answer-input"
+                    placeholder="?"
+                    min="0"
+                    max="18"
+                  />
+                  <button
+                    id="SimpleAddition-speech-btn"
+                    class="game-btn small"
+                    type="button"
+                    aria-label="Speak your answer"
+                  >
+                    🎤
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="game-controls">
+              <button
+                id="SimpleAddition-submit-btn"
+                class="game-btn primary"
+                type="button"
+              >
+                ✓ Submit Answer
+              </button>
+              <button
+                id="SimpleAddition-hint-btn"
+                class="game-btn hint"
+                type="button"
+              >
+                💡 Hint
+              </button>
+              <button
+                id="SimpleAddition-new-problem-btn"
+                class="game-btn secondary"
+                type="button"
+              >
+                🔄 New Problem
+              </button>
+            </div>
+            <div class="scoring-display hidden">
+              <div class="scoring-array hits-array">
+                <div class="array-title">Tries Array</div>
+                <div class="array-content" id="SimpleAddition-hits-display">
+                  []
+                </div>
+              </div>
+              <div class="scoring-array errors-array">
+                <div class="array-title">Errors Array</div>
+                <div class="array-content" id="SimpleAddition-errors-display">
+                  []
+                </div>
+              </div>
+            </div>
+            <div class="auto-test-controls">
+              <button
+                id="start-auto-test-btn"
+                class="game-btn secondary small"
+                type="button"
+              >
+                🧪 Start Auto-Test (10% errors)
+              </button>
+            </button>
+            <button
+            id="stop-auto-test-btn"
+            class="game-btn secondary small hidden"
+            type="button"
+            >
+            🛑 Stop Auto-Test
+          </button>
+          <button
+            id="scoresOnBtn"
+            class="game-btn secondary small"
+            type="button"
+          >
+            Show Arrays
+          </button>
+          <button
+            id="scoresOffBtn"
+            class="game-btn secondary small hidden"
+            type="button"
+          >
+            Hide Arrays
+          </button>
+            </div>
+            <div
+              class="visual-helper hidden"
+              id="SimpleAddition-visual-helper"
+            ></div>
+            <div class="feedback-area" id="SimpleAddition-feedback-area"></div>
+            <button id="SimpleAddition-reset-btn">Reset Stats</button>
+          </div>
+        </div>
+      </main>
+      <footer>
+        <p>🌟 Keep practicing and have fun! 🌟</p>
+      </footer>
+    </div>
+    <script src="local-storage-api.js" defer></script>
+    <script src="main.js" defer></script>
+  </body>
+</html>
+

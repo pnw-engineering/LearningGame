@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simple Database Viewer</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        background: #f5f5f5;
+      }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      .header {
+        background: #007bff;
+        color: white;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+      }
+      .section {
+        background: white;
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+      }
+      .table th,
+      .table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+      }
+      .table th {
+        background: #f8f9fa;
+      }
+      .loading {
+        text-align: center;
+        color: #666;
+      }
+      .error {
+        background: #f8d7da;
+        color: #721c24;
+        padding: 15px;
+        border-radius: 5px;
+      }
+      .success {
+        background: #d4edda;
+        color: #155724;
+        padding: 15px;
+        border-radius: 5px;
+      }
+      button {
+        background: #28a745;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #218838;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>🗄️ Database Inspector</h1>
+        <p>Addition Game Database Contents</p>
+        <button onclick="refreshData()">🔄 Refresh</button>
+      </div>
+
+      <div id="status" class="loading">Loading...</div>
+      <div id="content"></div>
+    </div>
+
+    <script>
+      function log(message) {
+        console.log(message);
+        const status = document.getElementById("status");
+        status.innerHTML = `<div class="success">${message}</div>`;
+      }
+
+      function error(message) {
+        console.error(message);
+        const status = document.getElementById("status");
+        status.innerHTML = `<div class="error">❌ ${message}</div>`;
+      }
+
+      async function refreshData() {
+        log("Fetching database data...");
+
+        try {
+          // Test if we can reach the API
+          const healthData = await api.health();
+          if (!healthData.success) {
+            throw new Error(`Health check failed: ${healthData.error}`);
+          }
+
+          log("Health check passed, fetching database info...");
+
+          // Fetch the database data
+          const data = await api.inspect();
+          if (!data.success) {
+            throw new Error(`API request failed: ${data.error}`);
+          }
+          log(
+            `Data loaded successfully! ${data.summary.totalRecords} total records`
+          );
+
+          displayData(data);
+        } catch (err) {
+          error(`Failed to load data: ${err.message}`);
+          console.error("Full error:", err);
+        }
+      }
+
+      function displayData(data) {
+        const content = document.getElementById("content");
+
+        let html = `
+                <div class="section">
+                    <h3>📊 Summary</h3>
+                    <p><strong>Database:</strong> ${data.database}</p>
+                    <p><strong>Last Updated:</strong> ${new Date(
+                      data.timestamp
+                    ).toLocaleString()}</p>
+                    <p><strong>Tables:</strong> ${data.summary.totalTables}</p>
+                    <p><strong>Total Records:</strong> ${
+                      data.summary.totalRecords
+                    }</p>
+                </div>
+            `;
+
+        // Display each table
+        for (const [tableName, tableData] of Object.entries(data.tables)) {
+          html += `
+                    <div class="section">
+                        <h3>📋 ${tableName.toUpperCase()} (${
+            tableData.count
+          } records)</h3>
+                `;
+
+          if (tableData.count > 0) {
+            const columns = Object.keys(tableData.data[0]);
+            html += '<table class="table"><thead><tr>';
+
+            columns.forEach((col) => {
+              html += `<th>${col}</th>`;
+            });
+            html += "</tr></thead><tbody>";
+
+            tableData.data.forEach((row) => {
+              html += "<tr>";
+              columns.forEach((col) => {
+                let value = row[col];
+                if (value === null) value = "<em>null</em>";
+                html += `<td>${value}</td>`;
+              });
+              html += "</tr>";
+            });
+
+            html += "</tbody></table>";
+          } else {
+            html += "<p><em>No data in this table</em></p>";
+          }
+
+          html += "</div>";
+        }
+
+        content.innerHTML = html;
+      }
+
+      // Load data when page loads
+      document.addEventListener("DOMContentLoaded", function () {
+        refreshData();
+      });
+
+      // Auto-refresh every 30 seconds
+      setInterval(refreshData, 30000);
+    </script>
+    <script src="local-storage-api.js"></script>
+  </body>
+</html>

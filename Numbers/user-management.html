@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>User Management - Addition Game</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+        min-height: 100vh;
+      }
+      .container {
+        max-width: 1000px;
+        margin: 0 auto;
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        color: #2c3e50;
+        text-align: center;
+      }
+      .user-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+      }
+      .user-table th,
+      .user-table td {
+        border: 1px solid #ddd;
+        padding: 12px;
+        text-align: left;
+      }
+      .user-table th {
+        background: #f8f9fa;
+        font-weight: bold;
+      }
+      .user-table tr:nth-child(even) {
+        background: #f9f9f9;
+      }
+      .user-table tr:hover {
+        background: #e8f4fd;
+      }
+
+      .btn {
+        padding: 8px 16px;
+        margin: 2px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        text-decoration: none;
+        display: inline-block;
+      }
+      .btn-danger {
+        background: #dc3545;
+        color: white;
+      }
+      .btn-danger:hover {
+        background: #c82333;
+      }
+      .btn-primary {
+        background: #007bff;
+        color: white;
+      }
+      .btn-primary:hover {
+        background: #0056b3;
+      }
+      .btn-success {
+        background: #28a745;
+        color: white;
+      }
+      .btn-success:hover {
+        background: #218838;
+      }
+
+      .status {
+        padding: 15px;
+        margin: 10px 0;
+        border-radius: 5px;
+        display: none;
+      }
+      .status.success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+      .status.error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+      .status.show {
+        display: block;
+      }
+
+      .actions {
+        text-align: center;
+        margin: 20px 0;
+      }
+      .user-stats {
+        font-size: 12px;
+        color: #666;
+      }
+      .loading {
+        text-align: center;
+        color: #666;
+        font-style: italic;
+      }
+
+      .confirm-dialog {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+        padding: 15px;
+        margin: 10px 0;
+        border-radius: 5px;
+        display: none;
+      }
+      .confirm-dialog.show {
+        display: block;
+      }
+    </style>
+    <script src="local-storage-api.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <h1>👥 User Management</h1>
+      <p style="text-align: center">Manage users for the Addition Game</p>
+
+      <div class="actions">
+        <button id="refresh-btn" class="btn btn-primary">
+          🔄 Refresh Users
+        </button>
+        <a href="/" class="btn btn-success">🎮 Back to Game</a>
+        <a href="/db-simple.html" class="btn btn-primary">📊 View Database</a>
+      </div>
+
+      <div id="status" class="status"></div>
+
+      <div id="confirm-dialog" class="confirm-dialog">
+        <p id="confirm-message"></p>
+        <button id="confirm-yes" class="btn btn-danger">Yes, Delete</button>
+        <button id="confirm-no" class="btn btn-primary">Cancel</button>
+      </div>
+
+      <div id="loading" class="loading">Loading users...</div>
+
+      <table id="user-table" class="user-table" style="display: none">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Created</th>
+            <th>Level</th>
+            <th>Score</th>
+            <th>Games Played</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="user-table-body">
+          <!-- Users will be loaded here -->
+        </tbody>
+      </table>
+    </div>
+
+    <script>
+      let users = [];
+      let deleteUserId = null;
+
+      function showStatus(message, type = "success") {
+        const status = document.getElementById("status");
+        status.textContent = message;
+        status.className = `status ${type} show`;
+        setTimeout(() => {
+          status.classList.remove("show");
+        }, 5000);
+      }
+
+      function showConfirmDialog(userId, userName) {
+        deleteUserId = userId;
+        const dialog = document.getElementById("confirm-dialog");
+        const message = document.getElementById("confirm-message");
+        message.textContent = `Are you sure you want to delete user "${userName}"? This will permanently remove all their game data.`;
+        dialog.classList.add("show");
+      }
+
+      function hideConfirmDialog() {
+        document.getElementById("confirm-dialog").classList.remove("show");
+        deleteUserId = null;
+      }
+
+      async function loadUsers() {
+        try {
+          console.log("loadUsers: Starting to load users");
+          document.getElementById("loading").style.display = "block";
+          document.getElementById("user-table").style.display = "none";
+
+          console.log("loadUsers: API object:", api);
+          const result = await api.getUsers();
+          console.log("loadUsers: API result:", result);
+
+          if (!result.success) {
+            throw new Error(result.error || "Failed to load users");
+          }
+
+          users = result.users;
+          console.log("loadUsers: Users array:", users);
+          displayUsers();
+          showStatus(`Loaded ${users.length} users successfully`);
+        } catch (error) {
+          console.error("Failed to load users:", error);
+          showStatus(`Failed to load users: ${error.message}`, "error");
+        } finally {
+          console.log("loadUsers: Hiding loading indicator");
+          document.getElementById("loading").style.display = "none";
+        }
+      }
+
+      function displayUsers() {
+        const tbody = document.getElementById("user-table-body");
+        tbody.innerHTML = "";
+
+        users.forEach((user) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+                    <td>${user.id}</td>
+                    <td><strong>${user.username}</strong></td>
+                    <td><span class="user-stats">${new Date(
+                      user.created_at
+                    ).toLocaleDateString()}</span></td>
+                    <td>${user.current_level || 0}</td>
+                    <td>${user.total_games || 0}</td>
+                    <td>${user.total_games || 0}</td>
+                    <td><span class="user-stats">${
+                      user.status || "active"
+                    }</span></td>
+                    <td>
+                        <button class="btn btn-danger delete-user-btn" data-user-id="${
+                          user.id
+                        }" data-user-name="${user.username}">
+                            🗑️ Delete
+                        </button>
+                    </td>
+                `;
+          tbody.appendChild(row);
+        });
+
+        // Add event listeners to delete buttons
+        document.querySelectorAll(".delete-user-btn").forEach((button) => {
+          button.addEventListener("click", function () {
+            const userId = parseInt(this.getAttribute("data-user-id"));
+            const userName = this.getAttribute("data-user-name");
+            showConfirmDialog(userId, userName);
+          });
+        });
+
+        document.getElementById("user-table").style.display = "table";
+      }
+
+      async function deleteUser() {
+        if (!deleteUserId) return;
+
+        try {
+          const result = await api.deleteUser(deleteUserId);
+
+          if (!result.success) {
+            throw new Error(result.error || "Failed to delete user");
+          }
+          showStatus(result.message);
+
+          // Remove user from local array and refresh display
+          users = users.filter((user) => user.id !== deleteUserId);
+          displayUsers();
+
+          hideConfirmDialog();
+        } catch (error) {
+          console.error("Failed to delete user:", error);
+          showStatus(`Failed to delete user: ${error.message}`, "error");
+          hideConfirmDialog();
+        }
+      }
+
+      // Event listeners
+      document.addEventListener("DOMContentLoaded", function () {
+        loadUsers();
+
+        document
+          .getElementById("refresh-btn")
+          .addEventListener("click", loadUsers);
+
+        document
+          .getElementById("confirm-yes")
+          .addEventListener("click", deleteUser);
+        document
+          .getElementById("confirm-no")
+          .addEventListener("click", hideConfirmDialog);
+      });
+    </script>
+  </body>
+</html>

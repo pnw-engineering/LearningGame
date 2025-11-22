@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simple Test Page</title>
+  </head>
+  <body>
+    <h1>Test Page</h1>
+    <p>If you can see this, the server is working fine.</p>
+    <div id="test-content">
+      <p>JavaScript test will appear here...</p>
+    </div>
+
+    <script>
+      document.getElementById("test-content").innerHTML =
+        '<p style="color: green;">✅ JavaScript is working!</p>';
+
+      // Test fetch to users API
+      api
+        .getUsers()
+        .then((response) => response.json())
+        .then((data) => {
+          document.getElementById("test-content").innerHTML +=
+            '<p style="color: blue;">✅ API is working! Found ' +
+            data.length +
+            " users.</p>";
+        })
+        .catch((error) => {
+          document.getElementById("test-content").innerHTML +=
+            '<p style="color: red;">❌ API Error: ' + error.message + "</p>";
+        });
+    </script>
+    <script src="local-storage-api.js"></script>
+  </body>
+</html>

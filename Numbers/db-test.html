@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Database Test</title>
+  </head>
+  <body>
+    <h1>Database API Test</h1>
+    <button onclick="testAPI()">Test API</button>
+    <div id="result"></div>
+
+    <script>
+      async function testAPI() {
+        const result = document.getElementById("result");
+        result.innerHTML = "Testing API...";
+
+        try {
+          console.log("Fetching from local storage API");
+          const data = await api.inspect();
+          console.log("API response:", data);
+
+          if (!data.success) {
+            throw new Error(data.error || "API request failed");
+          }
+          console.log("Data received:", data);
+
+          result.innerHTML = `
+                    <h3>✅ API Success!</h3>
+                    <p><strong>Tables:</strong> ${data.summary.totalTables}</p>
+                    <p><strong>Records:</strong> ${
+                      data.summary.totalRecords
+                    }</p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+        } catch (error) {
+          console.error("API Error:", error);
+          result.innerHTML = `
+                    <h3>❌ API Error</h3>
+                    <p>${error.message}</p>
+                `;
+        }
+      }
+
+      // Auto-test on page load
+      window.addEventListener("load", testAPI);
+    </script>
+    <script src="local-storage-api.js"></script>
+  </body>
+</html>

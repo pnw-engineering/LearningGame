@@ -1,0 +1,17 @@
+services:
+  addition-game:
+    build: .
+    image: numbers-1.002
+    ports:
+      - "80:80"
+    volumes:
+      # Mount source for development (comment out for production)
+      - .:/usr/share/nginx/html
+    restart: unless-stopped
+    healthcheck:
+      test:
+        ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
