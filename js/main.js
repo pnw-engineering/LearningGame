@@ -1,11 +1,11 @@
 // Addition Game for Elementary Kids - Single Screen Implementation
 class AdditionGame {
-  // Level 0: Generate and prompt a random number for test mode
-  generateAndPromptLevel0Number() {
+  // beginners: Generate and prompt a random number for test mode
+  generateAndPromptbeginnersNumber() {
     // Pick a random number 0-9
     const targetNumber = Math.floor(Math.random() * 10);
     this.currentProblem = { targetNumber };
-    const instruction = document.getElementById("level0-instruction");
+    const instruction = document.getElementById("beginners-instruction");
     if (instruction) {
       instruction.textContent = `Find the number ${targetNumber}!`;
     }
@@ -13,13 +13,13 @@ class AdditionGame {
       this.speak(`Find the number ${targetNumber}!`);
     }
     // Reset feedback and tile highlights
-    this.clearLevel0Feedback();
-    this.resetLevel0Tiles();
-    this._level0FeedbackSpoken = false;
+    this.clearbeginnersFeedback();
+    this.resetbeginnersTiles();
+    this._beginnersFeedbackSpoken = false;
   }
-  handleLevel0Practice(number) {
+  handlebeginnersPractice(number) {
     // Announce the number touched only once
-    const instruction = document.getElementById("level0-instruction");
+    const instruction = document.getElementById("beginners-instruction");
     if (instruction)
       instruction.textContent = `That is the number ${number}. Touch another number!`;
     if (!this.settings.quietMode) {
@@ -28,13 +28,13 @@ class AdditionGame {
       this.speak(`That is the number ${number}. Touch another number!`);
     }
   }
-  setLevel0Mode(practice) {
-    console.log("setLevel0Mode called with practice:", practice);
-    this.level0PracticeMode = practice;
+  setbeginnersMode(practice) {
+    console.log("setbeginnersMode called with practice:", practice);
+    this.beginnersPracticeMode = practice;
     // Cancel any ongoing speech immediately when toggling mode
     if (window.speechSynthesis) window.speechSynthesis.cancel();
-    const btn = document.getElementById("level0-mode-btn");
-    const instruction = document.getElementById("level0-instruction");
+    const btn = document.getElementById("beginners-mode-btn");
+    const instruction = document.getElementById("beginners-instruction");
     console.log("Button element:", btn);
     console.log("Instruction element:", instruction);
     if (btn) {
@@ -48,62 +48,64 @@ class AdditionGame {
       if (instruction)
         instruction.textContent =
           "Touch a number and I will tell you what it is.";
-      this.clearLevel0PromptTimer();
+      this.clearbeginnersPromptTimer();
       if (!this.settings.quietMode) {
         this.speak("Touch a number and I will tell you what it is.");
       }
     } else {
       // Test mode: start normal prompt loop
-      this.generateAndPromptLevel0Number();
+      this.generateAndPromptbeginnersNumber();
     }
   }
-  // Level 0 - Number Recognition Methods
-  initLevel0() {
-    this.resetLevel0Stats();
-    this.updateLevel0Display();
-    this.clearLevel0PromptTimer();
+  // beginners - Number Recognition Methods
+  initbeginners() {
+    this.resetbeginnersStats();
+    this.updatebeginnersDisplay();
+    this.clearbeginnersPromptTimer();
     // Always update button to show current mode
-    this.setLevel0Mode(
-      this.level0PracticeMode === undefined ? true : this.level0PracticeMode
+    this.setbeginnersMode(
+      this.beginnersPracticeMode === undefined
+        ? true
+        : this.beginnersPracticeMode
     );
   }
   // Utility: Format matrix for display
   formatMatrix(matrix) {
     if (Array.isArray(matrix[0])) {
-      // 2D matrix (Level 1)
+      // 2D matrix (SimpleAddition)
       return matrix.map((row) => row.join(", ")).join(" | ");
     } else {
-      // 1D array (Level 0)
+      // 1D array (beginners)
       return matrix.join(", ");
     }
   }
 
-  // Utility: Record a try for a given level/problem
-  recordTry(level, i, j) {
-    if (level === 0) {
+  // Utility: Record a try for a given game/problem
+  recordTry(game, i, j) {
+    if (game === 0) {
       this.progressMatrix[0].tries[i]++;
-    } else if (level === 1) {
+    } else if (game === 1) {
       this.progressMatrix[1].tries[i][j]++;
     }
   }
 
-  // Utility: Record an error for a given level/problem
-  recordError(level, i, j) {
-    if (level === 0) {
+  // Utility: Record an error for a given game/problem
+  recordError(game, i, j) {
+    if (game === 0) {
       this.progressMatrix[0].errors[i]++;
-    } else if (level === 1) {
+    } else if (game === 1) {
       this.progressMatrix[1].errors[i][j]++;
     }
   }
 
   // Utility: Decrement error count (minimum 0)
-  decrementError(level, i, j) {
-    if (level === 0) {
+  decrementError(game, i, j) {
+    if (game === 0) {
       this.progressMatrix[0].errors[i] = Math.max(
         0,
         this.progressMatrix[0].errors[i] - 1
       );
-    } else if (level === 1) {
+    } else if (game === 1) {
       this.progressMatrix[1].errors[i][j] = Math.max(
         0,
         this.progressMatrix[1].errors[i][j] - 1
@@ -127,9 +129,9 @@ class AdditionGame {
     const target = document.getElementById(screenId);
     if (target) target.classList.remove("hidden");
   }
-  // Level 0 prompt repeat timer
-  level0PromptTimer = null;
-  level0PracticeMode = true;
+  // beginners prompt repeat timer
+  beginnersPromptTimer = null;
+  beginnersPracticeMode = true;
   constructor() {
     this.currentProblem = null;
     this.startTime = null;
@@ -139,11 +141,11 @@ class AdditionGame {
       quietMode: false,
       theme: "auto",
       difficulty: "normal",
-      gameLevel: 0,
+      gamegame: 0,
     };
     this.settings = { ...defaultSettings, ...this.gameStorage.getSettings() };
     this.stats = this.gameStorage.getGameStats();
-    this.currentGameLevel = this.settings.gameLevel || 0;
+    this.currentGamegame = this.settings.gamegame || 0;
     this.speechSynthesis = window.speechSynthesis;
 
     // Testing mode for scoring logic observation
@@ -154,12 +156,12 @@ class AdditionGame {
     // Backend Guidelines: Internal Scoring Arrays
     // Simple tracking for adaptive problem selection
     this.progressMatrix = {
-      // Level 0 (Number Recognition): 1D array for numbers 0-9
+      // beginners (Number Recognition): 1D array for numbers 0-9
       0: {
         tries: Array(10).fill(0),
         errors: Array(10).fill(0),
       },
-      // Level 1 (Single Addition): 10x10 matrix for number combinations
+      // SimpleAddition (Single Addition): 10x10 matrix for number combinations
       1: {
         tries: Array(10)
           .fill(null)
@@ -168,8 +170,8 @@ class AdditionGame {
           .fill(null)
           .map(() => Array(10).fill(0)),
       },
-    }; // Level definitions
-    this.levels = {
+    }; // game definitions
+    this.games = {
       0: {
         name: "Number Recognition",
         description: "Touch the number you hear! 🔢",
@@ -205,28 +207,28 @@ class AdditionGame {
     }, 100);
   }
 
-  updateScoringDisplays(specificLevel = null) {
-    // Update displays for specific level or all levels
-    const levelsToUpdate =
-      specificLevel !== null
-        ? [specificLevel.toString()]
+  updateScoringDisplays(specificgame = null) {
+    // Update displays for specific game or all games
+    const gamesToUpdate =
+      specificgame !== null
+        ? [specificgame.toString()]
         : Object.keys(this.progressMatrix);
 
-    levelsToUpdate.forEach((level) => {
-      const hitsDisplay = document.getElementById(`level${level}-hits-display`);
+    gamesToUpdate.forEach((game) => {
+      const hitsDisplay = document.getElementById(`game${game}-hits-display`);
       const errorsDisplay = document.getElementById(
-        `level${level}-errors-display`
+        `game${game}-errors-display`
       );
 
       if (hitsDisplay) {
         const formattedTries = this.formatMatrix(
-          this.progressMatrix[level].tries
+          this.progressMatrix[game].tries
         );
         hitsDisplay.textContent = formattedTries;
       }
       if (errorsDisplay) {
         const formattedErrors = this.formatMatrix(
-          this.progressMatrix[level].errors
+          this.progressMatrix[game].errors
         );
         errorsDisplay.textContent = formattedErrors;
       }
@@ -247,11 +249,11 @@ class AdditionGame {
         this.clearUserName();
       });
     }
-    // Welcome Screen - Level Selection
-    document.querySelectorAll(".level-card").forEach((card) => {
+    // Welcome Screen - game Selection
+    document.querySelectorAll(".game-card").forEach((card) => {
       card.addEventListener("click", (e) => {
-        const level = parseInt(e.currentTarget.dataset.level);
-        this.startLevel(level);
+        const game = parseInt(e.currentTarget.dataset.game);
+        this.startgame(game);
       });
     });
 
@@ -265,7 +267,7 @@ class AdditionGame {
       });
     }
 
-    const difficulty = document.getElementById("difficulty-level");
+    const difficulty = document.getElementById("difficulty-game");
     if (difficulty) {
       difficulty.addEventListener("change", (e) => {
         this.settings.difficulty = e.target.value;
@@ -283,87 +285,97 @@ class AdditionGame {
       });
     }
 
-    // Level 0 - Number Recognition
-    const level0BackBtn = document.getElementById("level0-back-btn");
-    if (level0BackBtn) {
-      level0BackBtn.addEventListener("click", () => {
+    // beginners - Number Recognition
+    const beginnersBackBtn = document.getElementById("beginners-back-btn");
+    if (beginnersBackBtn) {
+      beginnersBackBtn.addEventListener("click", () => {
         if (window.speechSynthesis) window.speechSynthesis.cancel();
         this.showScreen("welcome-screen");
       });
     }
 
-    const level0PlayBtn = document.getElementById("level0-play-btn");
-    if (level0PlayBtn) {
-      level0PlayBtn.addEventListener("click", () => {
-        this.playLevel0Number();
+    const beginnersPlayBtn = document.getElementById("beginners-play-btn");
+    if (beginnersPlayBtn) {
+      beginnersPlayBtn.addEventListener("click", () => {
+        this.playbeginnersNumber();
       });
     }
 
-    const level0HintBtn = document.getElementById("level0-hint-btn");
-    if (level0HintBtn) {
-      level0HintBtn.addEventListener("click", () => {
-        this.showLevel0Hint();
+    const beginnersHintBtn = document.getElementById("beginners-hint-btn");
+    if (beginnersHintBtn) {
+      beginnersHintBtn.addEventListener("click", () => {
+        this.showbeginnersHint();
       });
     }
 
     document
-      .querySelectorAll("#level0-number-grid .number-tile")
+      .querySelectorAll("#beginners-number-grid .number-tile")
       .forEach((tile) => {
         tile.addEventListener("click", (e) => {
           const number = parseInt(e.currentTarget.dataset.number);
-          if (this.level0PracticeMode) {
-            this.handleLevel0Practice(number);
+          if (this.beginnersPracticeMode) {
+            this.handlebeginnersPractice(number);
           } else {
-            this.checkLevel0Answer(number);
+            this.checkbeginnersAnswer(number);
           }
         });
       });
 
-    // Level 1 - Addition
-    const level1BackBtn = document.getElementById("level1-back-btn");
-    if (level1BackBtn) {
-      level1BackBtn.addEventListener("click", () => {
+    // SimpleAddition - Addition
+    const SimpleAdditionBackBtn = document.getElementById(
+      "SimpleAddition-back-btn"
+    );
+    if (SimpleAdditionBackBtn) {
+      SimpleAdditionBackBtn.addEventListener("click", () => {
         this.showScreen("welcome-screen");
       });
     }
 
-    const level1SubmitBtn = document.getElementById("level1-submit-btn");
-    if (level1SubmitBtn) {
-      level1SubmitBtn.addEventListener("click", () => {
-        this.checkLevel1Answer();
-      });
-    }
-
-    const level1HintBtn = document.getElementById("level1-hint-btn");
-    if (level1HintBtn) {
-      level1HintBtn.addEventListener("click", () => {
-        this.toggleLevel1Hint();
-      });
-    }
-
-    const level1NewProblemBtn = document.getElementById(
-      "level1-new-problem-btn"
+    const SimpleAdditionSubmitBtn = document.getElementById(
+      "SimpleAddition-submit-btn"
     );
-    if (level1NewProblemBtn) {
-      level1NewProblemBtn.addEventListener("click", () => {
-        this.generateLevel1Problem();
+    if (SimpleAdditionSubmitBtn) {
+      SimpleAdditionSubmitBtn.addEventListener("click", () => {
+        this.checkSimpleAdditionAnswer();
       });
     }
 
-    const level1AnswerInput = document.getElementById("level1-answer-input");
-    if (level1AnswerInput) {
-      level1AnswerInput.addEventListener("keypress", (e) => {
+    const SimpleAdditionHintBtn = document.getElementById(
+      "SimpleAddition-hint-btn"
+    );
+    if (SimpleAdditionHintBtn) {
+      SimpleAdditionHintBtn.addEventListener("click", () => {
+        this.toggleSimpleAdditionHint();
+      });
+    }
+
+    const SimpleAdditionNewProblemBtn = document.getElementById(
+      "SimpleAddition-new-problem-btn"
+    );
+    if (SimpleAdditionNewProblemBtn) {
+      SimpleAdditionNewProblemBtn.addEventListener("click", () => {
+        this.generateSimpleAdditionProblem();
+      });
+    }
+
+    const SimpleAdditionAnswerInput = document.getElementById(
+      "SimpleAddition-answer-input"
+    );
+    if (SimpleAdditionAnswerInput) {
+      SimpleAdditionAnswerInput.addEventListener("keypress", (e) => {
         if (e.key === "Enter") {
-          this.checkLevel1Answer();
+          this.checkSimpleAdditionAnswer();
         }
       });
     }
 
-    // Level 1 Speech Recognition Button
-    const level1SpeechBtn = document.getElementById("level1-speech-btn");
-    if (level1SpeechBtn) {
-      level1SpeechBtn.addEventListener("click", () => {
-        this.listenForLevel1Answer();
+    // SimpleAddition Speech Recognition Button
+    const SimpleAdditionSpeechBtn = document.getElementById(
+      "SimpleAddition-speech-btn"
+    );
+    if (SimpleAdditionSpeechBtn) {
+      SimpleAdditionSpeechBtn.addEventListener("click", () => {
+        this.listenForSimpleAdditionAnswer();
       });
     }
 
@@ -388,49 +400,51 @@ class AdditionGame {
       });
     }
 
-    // Level 0 - Reset Button
-    const level0ResetBtn = document.getElementById("level0-reset-btn");
-    if (level0ResetBtn) {
-      level0ResetBtn.addEventListener("click", () => {
-        this.stats.level0.correct = 0;
-        this.stats.level0.wrong = 0;
+    // beginners - Reset Button
+    const beginnersResetBtn = document.getElementById("beginners-reset-btn");
+    if (beginnersResetBtn) {
+      beginnersResetBtn.addEventListener("click", () => {
+        this.stats.beginners.correct = 0;
+        this.stats.beginners.wrong = 0;
         this.progressMatrix[0].tries = Array(10).fill(0);
         this.progressMatrix[0].errors = Array(10).fill(0);
-        this.updateLevel0Display();
+        this.updatebeginnersDisplay();
         this.updateScoringDisplays(0);
         this.gameStorage.saveGameStats(this.stats);
       });
     }
 
-    // Level 1 - Reset Button
-    const level1ResetBtn = document.getElementById("level1-reset-btn");
-    if (level1ResetBtn) {
-      level1ResetBtn.addEventListener("click", () => {
-        this.stats.level1.correct = 0;
-        this.stats.level1.wrong = 0;
+    // SimpleAddition - Reset Button
+    const SimpleAdditionResetBtn = document.getElementById(
+      "SimpleAddition-reset-btn"
+    );
+    if (SimpleAdditionResetBtn) {
+      SimpleAdditionResetBtn.addEventListener("click", () => {
+        this.stats.SimpleAddition.correct = 0;
+        this.stats.SimpleAddition.wrong = 0;
         this.progressMatrix[0].tries = Array(10).fill(0);
         this.progressMatrix[0].errors = Array(10).fill(0);
-        this.updateLevel1Display();
+        this.updateSimpleAdditionDisplay();
         this.updateScoringDisplays(0);
         this.gameStorage.saveGameStats(this.stats);
       });
     }
 
-    // Level 0 Practice/Test Toggle
-    // const level0ModeBtn = document.getElementById("level0-mode-btn");
-    // if (level0ModeBtn) {
-    //   level0ModeBtn.addEventListener("click", () => {
+    // beginners Practice/Test Toggle
+    // const beginnersModeBtn = document.getElementById("beginners-mode-btn");
+    // if (beginnersModeBtn) {
+    //   beginnersModeBtn.addEventListener("click", () => {
     //     console.log(
     //       "Mode button clicked, current mode:",
-    //       this.level0PracticeMode
+    //       this.beginnersPracticeMode
     //     );
-    //     this.setLevel0Mode(!this.level0PracticeMode);
+    //     this.setbeginnersMode(!this.beginnersPracticeMode);
     //   });
     // }
   }
 
-  // Level 1: Listen for spoken answer and fill input
-  listenForLevel1Answer() {
+  // SimpleAddition: Listen for spoken answer and fill input
+  listenForSimpleAdditionAnswer() {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
@@ -442,10 +456,10 @@ class AdditionGame {
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
 
-    console.log("[Level 1] Speech recognition started");
+    console.log("[SimpleAddition] Speech recognition started");
 
     recognition.onresult = (event) => {
-      console.log("[Level 1] Speech recognition result:", event);
+      console.log("[SimpleAddition] Speech recognition result:", event);
       let spoken = event.results[0][0].transcript.trim().toLowerCase();
       // Extract first number from spoken string
       let answer = null;
@@ -483,152 +497,155 @@ class AdditionGame {
         }
       }
       if (answer !== null) {
-        const input = document.getElementById("level1-answer-input");
+        const input = document.getElementById("SimpleAddition-answer-input");
         if (input) {
           input.value = answer;
           input.focus();
         }
-        this.checkLevel1Answer();
+        this.checkSimpleAdditionAnswer();
       } else {
-        this.showLevel1Feedback(
+        this.showSimpleAdditionFeedback(
           "Sorry, I didn't hear a number. Please try again.",
           "incorrect"
         );
       }
     };
     recognition.onerror = (err) => {
-      console.log("[Level 1] Speech recognition error:", err);
-      this.showLevel1Feedback(
+      console.log("[SimpleAddition] Speech recognition error:", err);
+      this.showSimpleAdditionFeedback(
         "Speech recognition error. Please try again.",
         "incorrect"
       );
     };
     recognition.onend = () => {
-      console.log("[Level 1] Speech recognition ended");
+      console.log("[SimpleAddition] Speech recognition ended");
     };
     recognition.onaudiostart = () => {
-      console.log("[Level 1] Speech recognition audio started");
+      console.log("[SimpleAddition] Speech recognition audio started");
     };
     recognition.onspeechstart = () => {
-      console.log("[Level 1] Speech recognition speech started");
+      console.log("[SimpleAddition] Speech recognition speech started");
     };
     recognition.onspeechend = () => {
-      console.log("[Level 1] Speech recognition speech ended");
+      console.log("[SimpleAddition] Speech recognition speech ended");
     };
     recognition.start();
-    this.showLevel1Feedback("Listening... Please say your answer.", "hint");
+    this.showSimpleAdditionFeedback(
+      "Listening... Please say your answer.",
+      "hint"
+    );
   }
 
   // ...existing code...
   // }
 
-  startLevel(level) {
-    this.currentGameLevel = level;
-    this.settings.gameLevel = level;
+  startgame(game) {
+    this.currentGamegame = game;
+    this.settings.gamegame = game;
     this.gameStorage.saveSettings(this.settings);
 
-    if (level === 0) {
-      this.showScreen("level0-screen");
-      this.initLevel0();
-    } else if (level === 1) {
-      this.showScreen("level1-screen");
-      this.initLevel1();
+    if (game === 0) {
+      this.showScreen("beginners-screen");
+      this.initbeginners();
+    } else if (game === 1) {
+      this.showScreen("SimpleAddition-screen");
+      this.initSimpleAddition();
     }
   }
 
   // Clear the repeat timer
-  clearLevel0PromptTimer() {
-    if (this.level0PromptTimer) {
-      clearTimeout(this.level0PromptTimer);
-      this.level0PromptTimer = null;
+  clearbeginnersPromptTimer() {
+    if (this.beginnersPromptTimer) {
+      clearTimeout(this.beginnersPromptTimer);
+      this.beginnersPromptTimer = null;
     }
   }
 
-  checkLevel0Answer(selectedNumber) {
+  checkbeginnersAnswer(selectedNumber) {
     if (!this.currentProblem) {
-      this.showLevel0Feedback("Click 'Play Number' first!", "incorrect");
+      this.showbeginnersFeedback("Click 'Play Number' first!", "incorrect");
       return;
     }
 
     const isCorrect = selectedNumber === this.currentProblem.targetNumber;
     const tile = document.querySelector(`[data-number="${selectedNumber}"]`);
 
-    if (!this._level0FeedbackSpoken) this._level0FeedbackSpoken = false;
+    if (!this._beginnersFeedbackSpoken) this._beginnersFeedbackSpoken = false;
     if (isCorrect) {
-      this.clearLevel0PromptTimer();
+      this.clearbeginnersPromptTimer();
       if (tile) tile.classList.add("correct");
-      this.stats.level0.correct++;
+      this.stats.beginners.correct++;
       this.recordTry(0, this.currentProblem.targetNumber, 0);
       this.decrementError(0, this.currentProblem.targetNumber, 0);
-      this.showLevel0Feedback(
+      this.showbeginnersFeedback(
         `🎉 Correct! You found ${selectedNumber}!`,
         "correct"
       );
-      if (!this.settings.quietMode && !this._level0FeedbackSpoken) {
+      if (!this.settings.quietMode && !this._beginnersFeedbackSpoken) {
         this.speak("Good job!", undefined, 1);
-        this._level0FeedbackSpoken = true;
+        this._beginnersFeedbackSpoken = true;
       }
       setTimeout(() => {
-        this.resetLevel0Tiles();
-        this.clearLevel0Feedback();
-        const instruction = document.getElementById("level0-instruction");
+        this.resetbeginnersTiles();
+        this.clearbeginnersFeedback();
+        const instruction = document.getElementById("beginners-instruction");
         if (instruction) {
           instruction.textContent = "Great job!";
         }
         // Automatically start next round
-        this.generateAndPromptLevel0Number();
+        this.generateAndPromptbeginnersNumber();
       }, 2000);
     } else {
       if (tile) tile.classList.add("incorrect");
-      this.stats.level0.wrong++;
+      this.stats.beginners.wrong++;
       this.recordTry(0, this.currentProblem.targetNumber, 0);
       this.recordError(0, this.currentProblem.targetNumber, 0);
       const errorMsg = `Try again! That was ${selectedNumber}, but we're looking for ${this.currentProblem.targetNumber}.`;
-      this.showLevel0Feedback(errorMsg, "incorrect");
-      if (!this.settings.quietMode && !this._level0FeedbackSpoken) {
+      this.showbeginnersFeedback(errorMsg, "incorrect");
+      if (!this.settings.quietMode && !this._beginnersFeedbackSpoken) {
         this.speak(errorMsg, undefined, 1);
-        this._level0FeedbackSpoken = true;
+        this._beginnersFeedbackSpoken = true;
       }
       setTimeout(() => {
         if (tile) tile.classList.remove("incorrect");
       }, 1000);
     }
-    this.updateLevel0Display();
+    this.updatebeginnersDisplay();
     this.gameStorage.saveGameStats(this.stats);
   }
 
-  showLevel0Hint() {
+  showbeginnersHint() {
     if (!this.currentProblem) {
-      this.showLevel0Feedback(
+      this.showbeginnersFeedback(
         "Click 'Play Number' first to get a hint!",
         "incorrect"
       );
       return;
     }
 
-    const instruction = document.getElementById("level0-instruction");
+    const instruction = document.getElementById("beginners-instruction");
     if (instruction) {
       instruction.textContent = `Hint: Look for the number ${this.currentProblem.targetNumber}! 👀`;
     }
   }
 
-  resetLevel0Tiles() {
+  resetbeginnersTiles() {
     document
-      .querySelectorAll("#level0-number-grid .number-tile")
+      .querySelectorAll("#beginners-number-grid .number-tile")
       .forEach((tile) => {
         tile.classList.remove("correct", "incorrect", "selected");
       });
   }
 
-  clearLevel0Feedback() {
-    const feedbackArea = document.getElementById("level0-feedback-area");
+  clearbeginnersFeedback() {
+    const feedbackArea = document.getElementById("beginners-feedback-area");
     if (feedbackArea) {
       feedbackArea.innerHTML = "";
     }
   }
 
-  showLevel0Feedback(message, type) {
-    const feedbackArea = document.getElementById("level0-feedback-area");
+  showbeginnersFeedback(message, type) {
+    const feedbackArea = document.getElementById("beginners-feedback-area");
     if (feedbackArea) {
       feedbackArea.innerHTML = `
         <div class="feedback ${type}">
@@ -638,34 +655,36 @@ class AdditionGame {
     }
   }
 
-  resetLevel0Stats() {
-    if (!this.stats.level0) {
-      this.stats.level0 = { correct: 0, wrong: 0 };
+  resetbeginnersStats() {
+    if (!this.stats.beginners) {
+      this.stats.beginners = { correct: 0, wrong: 0 };
     }
   }
 
-  updateLevel0Display() {
-    const total = this.stats.level0.correct + this.stats.level0.wrong;
+  updatebeginnersDisplay() {
+    const total = this.stats.beginners.correct + this.stats.beginners.wrong;
     const accuracy =
-      total > 0 ? Math.round((this.stats.level0.correct / total) * 100) : 100;
+      total > 0
+        ? Math.round((this.stats.beginners.correct / total) * 100)
+        : 100;
 
-    const correctEl = document.getElementById("level0-correct");
-    const wrongEl = document.getElementById("level0-wrong");
-    const accuracyEl = document.getElementById("level0-accuracy");
+    const correctEl = document.getElementById("beginners-correct");
+    const wrongEl = document.getElementById("beginners-wrong");
+    const accuracyEl = document.getElementById("beginners-accuracy");
 
-    if (correctEl) correctEl.textContent = this.stats.level0.correct;
-    if (wrongEl) wrongEl.textContent = this.stats.level0.wrong;
+    if (correctEl) correctEl.textContent = this.stats.beginners.correct;
+    if (wrongEl) wrongEl.textContent = this.stats.beginners.wrong;
     if (accuracyEl) accuracyEl.textContent = `${accuracy}%`;
   }
 
-  // Level 1 - Addition Methods
-  initLevel1() {
-    this.resetLevel1Stats();
-    this.updateLevel1Display();
-    this.generateLevel1Problem();
+  // SimpleAddition - Addition Methods
+  initSimpleAddition() {
+    this.resetSimpleAdditionStats();
+    this.updateSimpleAdditionDisplay();
+    this.generateSimpleAdditionProblem();
   }
 
-  generateLevel1Problem() {
+  generateSimpleAdditionProblem() {
     // Intelligent selection: prioritize least-attempted combinations
     const { num1, num2 } = this.selectBalancedCombination();
 
@@ -676,9 +695,9 @@ class AdditionGame {
       startTime: Date.now(),
     };
 
-    const num1El = document.getElementById("level1-num1");
-    const num2El = document.getElementById("level1-num2");
-    const answerInput = document.getElementById("level1-answer-input");
+    const num1El = document.getElementById("SimpleAddition-num1");
+    const num2El = document.getElementById("SimpleAddition-num2");
+    const answerInput = document.getElementById("SimpleAddition-answer-input");
 
     if (num1El) num1El.textContent = num1;
     if (num2El) num2El.textContent = num2;
@@ -690,12 +709,12 @@ class AdditionGame {
       }
     }
 
-    this.clearLevel1Feedback();
+    this.clearSimpleAdditionFeedback();
 
     // Update hint content if hint is currently visible
-    const helper = document.getElementById("level1-visual-helper");
+    const helper = document.getElementById("SimpleAddition-visual-helper");
     if (helper && !helper.classList.contains("hidden")) {
-      this.showLevel1Hint();
+      this.showSimpleAdditionHint();
     }
   }
 
@@ -754,21 +773,21 @@ class AdditionGame {
     };
   }
 
-  checkLevel1Answer() {
-    const input = document.getElementById("level1-answer-input");
+  checkSimpleAdditionAnswer() {
+    const input = document.getElementById("SimpleAddition-answer-input");
     if (!input) return;
 
     const userAnswer = parseInt(input.value);
 
     if (isNaN(userAnswer)) {
-      this.showLevel1Feedback("Please enter a number!", "incorrect");
+      this.showSimpleAdditionFeedback("Please enter a number!", "incorrect");
       return;
     }
 
     const isCorrect = userAnswer === this.currentProblem.correctAnswer;
 
     if (isCorrect) {
-      this.stats.level1.correct++;
+      this.stats.SimpleAddition.correct++;
 
       // Backend Guidelines: Record try (+1 attempt)
       this.recordTry(1, this.currentProblem.num1, this.currentProblem.num2);
@@ -780,43 +799,43 @@ class AdditionGame {
         this.currentProblem.num2
       );
 
-      this.showLevel1Feedback(
+      this.showSimpleAdditionFeedback(
         `🎉 Excellent! ${this.currentProblem.num1} + ${this.currentProblem.num2} = ${this.currentProblem.correctAnswer}`,
         "correct"
       );
 
       setTimeout(
         () => {
-          this.generateLevel1Problem();
+          this.generateSimpleAdditionProblem();
         },
         this.autoTestMode ? 50 : 2000
       );
     } else {
-      this.stats.level1.wrong++;
+      this.stats.SimpleAddition.wrong++;
 
       // Backend Guidelines: Record try (+1 attempt) and error (-1 point, minimum 0)
       this.recordTry(1, this.currentProblem.num1, this.currentProblem.num2);
       this.recordError(1, this.currentProblem.num1, this.currentProblem.num2);
 
-      this.showLevel1Feedback(
+      this.showSimpleAdditionFeedback(
         `Not quite! ${this.currentProblem.num1} + ${this.currentProblem.num2} = ${this.currentProblem.correctAnswer}, not ${userAnswer}. Try the next one!`,
         "incorrect"
       );
 
       setTimeout(
         () => {
-          this.generateLevel1Problem();
+          this.generateSimpleAdditionProblem();
         },
         this.autoTestMode ? 50 : 2000
       );
     }
 
-    this.updateLevel1Display();
+    this.updateSimpleAdditionDisplay();
     this.gameStorage.saveGameStats(this.stats);
   }
 
-  showLevel1Hint() {
-    const helper = document.getElementById("level1-visual-helper");
+  showSimpleAdditionHint() {
+    const helper = document.getElementById("SimpleAddition-visual-helper");
     if (helper) {
       helper.classList.remove("hidden");
       helper.innerHTML = `
@@ -839,34 +858,38 @@ class AdditionGame {
     }
   }
 
-  hideLevel1Hint() {
-    const helper = document.getElementById("level1-visual-helper");
+  hideSimpleAdditionHint() {
+    const helper = document.getElementById("SimpleAddition-visual-helper");
     if (helper) {
       helper.classList.add("hidden");
     }
   }
 
-  toggleLevel1Hint() {
-    const helper = document.getElementById("level1-visual-helper");
+  toggleSimpleAdditionHint() {
+    const helper = document.getElementById("SimpleAddition-visual-helper");
     if (helper) {
       if (helper.classList.contains("hidden")) {
         helper.classList.remove("hidden");
-        this.showLevel1Hint();
+        this.showSimpleAdditionHint();
       } else {
         helper.classList.add("hidden");
       }
     }
   }
 
-  clearLevel1Feedback() {
-    const feedbackArea = document.getElementById("level1-feedback-area");
+  clearSimpleAdditionFeedback() {
+    const feedbackArea = document.getElementById(
+      "SimpleAddition-feedback-area"
+    );
     if (feedbackArea) {
       feedbackArea.innerHTML = "";
     }
   }
 
-  showLevel1Feedback(message, type) {
-    const feedbackArea = document.getElementById("level1-feedback-area");
+  showSimpleAdditionFeedback(message, type) {
+    const feedbackArea = document.getElementById(
+      "SimpleAddition-feedback-area"
+    );
     if (feedbackArea) {
       feedbackArea.innerHTML = `
         <div class="feedback ${type}">
@@ -876,23 +899,26 @@ class AdditionGame {
     }
   }
 
-  resetLevel1Stats() {
-    if (!this.stats.level1) {
-      this.stats.level1 = { correct: 0, wrong: 0 };
+  resetSimpleAdditionStats() {
+    if (!this.stats.SimpleAddition) {
+      this.stats.SimpleAddition = { correct: 0, wrong: 0 };
     }
   }
 
-  updateLevel1Display() {
-    const total = this.stats.level1.correct + this.stats.level1.wrong;
+  updateSimpleAdditionDisplay() {
+    const total =
+      this.stats.SimpleAddition.correct + this.stats.SimpleAddition.wrong;
     const accuracy =
-      total > 0 ? Math.round((this.stats.level1.correct / total) * 100) : 100;
+      total > 0
+        ? Math.round((this.stats.SimpleAddition.correct / total) * 100)
+        : 100;
 
-    const correctEl = document.getElementById("level1-correct");
-    const wrongEl = document.getElementById("level1-wrong");
-    const accuracyEl = document.getElementById("level1-accuracy");
+    const correctEl = document.getElementById("SimpleAddition-correct");
+    const wrongEl = document.getElementById("SimpleAddition-wrong");
+    const accuracyEl = document.getElementById("SimpleAddition-accuracy");
 
-    if (correctEl) correctEl.textContent = this.stats.level1.correct;
-    if (wrongEl) wrongEl.textContent = this.stats.level1.wrong;
+    if (correctEl) correctEl.textContent = this.stats.SimpleAddition.correct;
+    if (wrongEl) wrongEl.textContent = this.stats.SimpleAddition.wrong;
     if (accuracyEl) accuracyEl.textContent = `${accuracy}%`;
   }
 
@@ -903,14 +929,16 @@ class AdditionGame {
     // Show scoring displays during testing
     this.showScoringDisplays();
 
-    // Show Level 1 if not already showing
+    // Show SimpleAddition if not already showing
     if (
-      !document.getElementById("level1-screen").classList.contains("hidden")
+      !document
+        .getElementById("SimpleAddition-screen")
+        .classList.contains("hidden")
     ) {
-      this.generateLevel1Problem();
+      this.generateSimpleAdditionProblem();
     } else {
-      this.showScreen("level1-screen");
-      this.generateLevel1Problem();
+      this.showScreen("SimpleAddition-screen");
+      this.generateSimpleAdditionProblem();
     }
 
     this.scheduleAutoAnswer();
@@ -959,7 +987,7 @@ class AdditionGame {
   generateAutoAnswer() {
     if (!this.autoTestMode || !this.currentProblem) return;
 
-    const input = document.getElementById("level1-answer-input");
+    const input = document.getElementById("SimpleAddition-answer-input");
     if (!input) return;
 
     let answer;
@@ -992,7 +1020,7 @@ class AdditionGame {
 
     // Fill the input and trigger answer check
     input.value = answer;
-    this.checkLevel1Answer();
+    this.checkSimpleAdditionAnswer();
 
     // Schedule next auto answer only if we're still in auto-test mode
     // The timeout accounts for feedback display time
@@ -1014,10 +1042,12 @@ class AdditionGame {
     const displayName = name && name.length > 0 ? name : "Not Entered";
     const nameDisplay = document.getElementById("user-name-display");
     if (nameDisplay) nameDisplay.textContent = displayName;
-    const level0Name = document.getElementById("level0-user-name");
-    if (level0Name) level0Name.textContent = displayName;
-    const level1Name = document.getElementById("level1-user-name");
-    if (level1Name) level1Name.textContent = displayName;
+    const beginnersName = document.getElementById("beginners-user-name");
+    if (beginnersName) beginnersName.textContent = displayName;
+    const SimpleAdditionName = document.getElementById(
+      "SimpleAddition-user-name"
+    );
+    if (SimpleAdditionName) SimpleAdditionName.textContent = displayName;
   }
 
   // Personalization: Prompt for name with TTS and speech recognition
@@ -1059,7 +1089,7 @@ class AdditionGame {
       localStorage.setItem("userName", this.userName);
       this.updateUserNameDisplay();
       this.speak(
-        `Hi ${this.userName}, let's get started. First pick the level.`,
+        `Hi ${this.userName}, let's get started. First pick the game.`,
         undefined,
         1
       );
@@ -1084,6 +1114,7 @@ class AdditionGame {
     this.updateUserNameDisplay();
     this.promptForUserName();
   }
+
   speak(text, onEndCallback, repeatCountOverride) {
     console.log("speak called with text:", text);
     if (this.speechSynthesis && !this.settings.quietMode) {
@@ -1195,37 +1226,37 @@ class AdditionGame {
 
   // ...existing code...
 
-  // Start Level 0 game (Number Recognition) in practice mode
+  // Start beginners game (Number Recognition) in practice mode
   // startPracticeMode() {
   //   const welcome = document.getElementById("welcome-screen");
-  //   const level0 = document.getElementById("level0-screen");
+  //   const beginners = document.getElementById("beginners-screen");
   //   if (welcome) welcome.classList.add("hidden");
-  //   if (level0) level0.classList.remove("hidden");
-  //   this.setLevel0Mode(true); // Start in practice mode
+  //   if (beginners) beginners.classList.remove("hidden");
+  //   this.setbeginnersMode(true); // Start in practice mode
   // }
 
-  // Start Level 1 game (Addition)
+  // Start SimpleAddition game (Addition)
   startGame() {
     const welcome = document.getElementById("welcome-screen");
-    const level1 = document.getElementById("level1-screen");
+    const SimpleAddition = document.getElementById("SimpleAddition-screen");
     if (welcome) welcome.classList.add("hidden");
-    if (level1) level1.classList.remove("hidden");
-    // Add Level 1 initialization if needed
+    if (SimpleAddition) SimpleAddition.classList.remove("hidden");
+    // Add SimpleAddition initialization if needed
   }
 
-  // Go back to welcome screen from Level 0
-  goToWelcomeFromLevel0() {
+  // Go back to welcome screen from beginners
+  goToWelcomeFrombeginners() {
     const welcome = document.getElementById("welcome-screen");
-    const level0 = document.getElementById("level0-screen");
-    if (level0) level0.classList.add("hidden");
+    const beginners = document.getElementById("beginners-screen");
+    if (beginners) beginners.classList.add("hidden");
     if (welcome) welcome.classList.remove("hidden");
   }
 
-  // Go back to welcome screen from Level 1
-  goToWelcomeFromLevel1() {
+  // Go back to welcome screen from SimpleAddition
+  goToWelcomeFromSimpleAddition() {
     const welcome = document.getElementById("welcome-screen");
-    const level1 = document.getElementById("level1-screen");
-    if (level1) level1.classList.add("hidden");
+    const SimpleAddition = document.getElementById("SimpleAddition-screen");
+    if (SimpleAddition) SimpleAddition.classList.add("hidden");
     if (welcome) welcome.classList.remove("hidden");
   }
 

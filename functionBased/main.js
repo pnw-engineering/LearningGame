@@ -3,14 +3,13 @@
 
 // Shared game state
 const gameState = {
-  currentGame: 0,
+  currentgame: 0,
   beginnersPracticeMode: true,
   stats: {
     beginners: { correct: 0, wrong: 0 },
     SimpleAddition: { correct: 0, wrong: 0 },
   },
   userName: localStorage.getItem("userName") || "",
-  currentUserId: localStorage.getItem("currentUserId") || null,
   settings: {
     theme: "auto",
     quietMode: false,
@@ -19,9 +18,6 @@ const gameState = {
   currentProblem: null,
   speechSynthesis: window.speechSynthesis,
 };
-
-// Global storage object (initialized in initializeGame)
-let gameStorage;
 
 // Utility functions
 // Load settings from storage
@@ -40,25 +36,14 @@ function showScreen(screenId) {
 
 function updateUserNameDisplay() {
   const name =
-    gameState.userName ||
-    localStorage.getItem("userName") ||
-    "No user selected";
-  console.log("updateUserNameDisplay called. Current name:", name);
-  console.log("gameState.userName:", gameState.userName);
-  console.log("localStorage userName:", localStorage.getItem("userName"));
-
+    gameState.userName || localStorage.getItem("userName") || "Not Entered";
   [
     "user-name-display",
     "beginners-user-name",
     "SimpleAddition-user-name",
   ].forEach((id) => {
     const el = document.getElementById(id);
-    if (el) {
-      el.textContent = name;
-      console.log(`Updated element ${id} with name: ${name}`);
-    } else {
-      console.log(`Element with id ${id} not found`);
-    }
+    if (el) el.textContent = name;
   });
 }
 
@@ -136,207 +121,29 @@ function speak(text, onend) {
 
 function clearUserName() {
   gameState.userName = "";
-  gameState.currentUserId = null;
   localStorage.removeItem("userName");
-  localStorage.removeItem("currentUserId");
   updateUserNameDisplay();
-  // Reset user dropdown to empty
-  const userSelect = document.getElementById("user-select");
-  if (userSelect) {
-    userSelect.value = "";
-  }
-}
-
-// User Selection Functions
-async function loadUsersToDropdown() {
-  const userSelect = document.getElementById("user-select");
-  if (!userSelect) return;
-
-  try {
-    userSelect.innerHTML = '<option value="">Loading users...</option>';
-
-    const result = await api.getUsers();
-    if (!result.success) {
-      throw new Error(result.error || "Failed to load users");
-    }
-
-    const users = result.users;
-
-    // Clear dropdown and add default option
-    userSelect.innerHTML = '<option value="">Select a user...</option>';
-
-    // Add each user to dropdown
-    users.forEach((user) => {
-      const option = document.createElement("option");
-      option.value = user.id;
-      option.textContent = user.username;
-      userSelect.appendChild(option);
-    });
-
-    // Select current user if exists
-    if (gameState.currentUserId) {
-      userSelect.value = gameState.currentUserId;
-    }
-
-    console.log(`Loaded ${users.length} users to dropdown`);
-  } catch (error) {
-    console.error("Failed to load users:", error);
-    userSelect.innerHTML = '<option value="">Error loading users</option>';
-  }
-}
-
-async function selectUser(userId) {
-  console.log("selectUser called with userId:", userId);
-
-  if (!userId) {
-    console.log("No userId provided, clearing user name");
-    clearUserName();
-    return;
-  }
-
-  try {
-    console.log(`Fetching user data for ID: ${userId}`);
-    const result = await api.getUser(userId);
-    if (!result.success) {
-      throw new Error(result.error || "Failed to load user");
-    }
-
-    const response_data = result;
-    console.log("User data received:", response_data);
-
-    // Handle the user structure from the API
-    const user = response_data.user || response_data;
-
-    gameState.userName = user.username;
-    gameState.currentUserId = user.id;
-
-    // Save to localStorage
-    localStorage.setItem("userName", user.username);
-    localStorage.setItem("currentUserId", user.id);
-
-    console.log("About to update user name display");
-    updateUserNameDisplay();
-    console.log(`Selected user: ${user.username} (ID: ${user.id})`);
-  } catch (error) {
-    console.error("Failed to select user:", error);
-    alert("Failed to load user information. Please try again.");
-  }
-}
-
-async function createNewUser() {
-  const userName = prompt("Enter new user name:");
-  if (!userName || userName.trim() === "") {
-    return;
-  }
-
-  try {
-    const result = await api.createUser({
-      username: userName.trim(),
-    });
-
-    if (!result.success) {
-      throw new Error(result.error || "Failed to create user");
-    }
-
-    const response_data = result;
-
-    // Handle the user structure from the API
-    const newUser = response_data.user || response_data;
-
-    // Refresh the dropdown to include the new user
-    await loadUsersToDropdown();
-
-    // Select the new user
-    await selectUser(newUser.id);
-
-    console.log(
-      `Created and selected new user: ${newUser.username} (ID: ${newUser.id})`
-    );
-  } catch (error) {
-    console.error("Failed to create new user:", error);
-    alert("Failed to create new user. Please try again.");
-  }
-}
-
-// Helper function to find user by name
-async function findUserByName(name) {
-  try {
-    const result = await api.getUsers();
-    if (!result.success) {
-      throw new Error(result.error || "Failed to load users");
-    }
-
-    const users = result.users;
-    return users.find(
-      (user) => user.username.toLowerCase() === name.toLowerCase()
-    );
-  } catch (error) {
-    console.error("Failed to search for user:", error);
-    return null;
-  }
-}
-
-// Helper function to create user in database
-async function createUserInDatabase(name) {
-  try {
-    const result = await api.createUser({
-      username: name.trim(),
-    });
-
-    if (!result.success) {
-      throw new Error(result.error || "Failed to create user");
-    }
-
-    const response_data = result;
-    const newUser = response_data.user || response_data;
-
-    console.log(`Created new user: ${newUser.username} (ID: ${newUser.id})`);
-    return newUser;
-  } catch (error) {
-    console.error("Failed to create new user:", error);
-    return null;
-  }
+  promptForUserName();
 }
 
 // Personalization: Prompt for name with TTS and speech recognition
 function promptForUserName() {
-  // Check if we have existing users
-  loadUsersToDropdown().then(() => {
-    const userSelect = document.getElementById("user-select");
-    if (userSelect && userSelect.children.length > 1) {
-      // More than just "Select a user..."
-      speak("Hi! Please pick a user or say your name.", () => {
-        // Focus on the user selection dropdown
-        userSelect.focus();
-      });
-    } else {
-      speak("Hi! Please pick a user or say your name.", () => {
-        listenForUserName();
-      });
+  speak(
+    "Hi, I'm going to play some number games with you. What's your name?",
+    () => {
+      listenForUserName();
     }
-  });
+  );
 }
 
 function startgame(game) {
-  // Check if user is selected
-  if (!gameState.userName || gameState.userName === "No user selected") {
-    alert("Please select a user or create a new one before starting the game!");
-    return;
-  }
-
-  gameState.currentGame = game;
-  gameState.settings.currentGame = game;
+  gameState.currentgame = game;
+  gameState.settings.gamegame = game;
   // ...save settings logic...
   if (game === 0) {
     showScreen("beginners-screen");
     initbeginners();
   } else if (game === 1) {
-    showScreen("SimpleAddition-screen");
-    initSimpleAddition();
-  } else if (game === 2) {
-    showScreen("SimpleAddition-screen");
-    initSimpleAddition();
-  } else if (game === 3) {
     showScreen("SimpleAddition-screen");
     initSimpleAddition();
   }
@@ -892,7 +699,7 @@ function listenForSimpleAdditionAnswer() {
   }
 }
 
-async function listenForUserName() {
+function listenForUserName() {
   const SpeechRecognition =
     window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) {
@@ -903,90 +710,25 @@ async function listenForUserName() {
   recognition.lang = "en-US";
   recognition.interimResults = false;
   recognition.maxAlternatives = 1;
-
-  recognition.onresult = async (event) => {
+  recognition.onresult = (event) => {
     let spoken = event.results[0][0].transcript.trim();
-    console.log("Voice recognition heard:", spoken);
-
     // Use only the first word if the phrase is long
     const words = spoken.split(" ");
     if (words.length > 2) {
       spoken = words[0];
     }
-
-    // Clean up the name
-    const cleanName = spoken.charAt(0).toUpperCase() + spoken.slice(1);
-    console.log("Cleaned name:", cleanName);
-
-    try {
-      // Check if user exists in database
-      const existingUser = await findUserByName(cleanName);
-
-      if (existingUser) {
-        // User exists, select them
-        console.log("Found existing user:", existingUser);
-        await selectUser(existingUser.id);
-
-        // Update dropdown selection
-        const userSelect = document.getElementById("user-select");
-        if (userSelect) {
-          userSelect.value = existingUser.id;
-        }
-
-        if (!gameState.settings.quietMode) {
-          speak(`Welcome back ${cleanName}! Let's get started.`);
-        }
-      } else {
-        // User doesn't exist, create new user
-        console.log("Creating new user:", cleanName);
-        const newUser = await createUserInDatabase(cleanName);
-
-        if (newUser) {
-          // Refresh dropdown and select new user
-          await loadUsersToDropdown();
-          await selectUser(newUser.id);
-
-          const userSelect = document.getElementById("user-select");
-          if (userSelect) {
-            userSelect.value = newUser.id;
-          }
-
-          if (!gameState.settings.quietMode) {
-            speak(`Nice to meet you ${cleanName}! Let's get started.`);
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Error processing voice input:", error);
-      speak("Sorry, there was an issue with your name. Please try again.");
-      setTimeout(() => listenForUserName(), 2000);
+    gameState.userName = spoken.charAt(0).toUpperCase() + spoken.slice(1);
+    localStorage.setItem("userName", gameState.userName);
+    updateUserNameDisplay();
+    if (!gameState.settings.quietMode) {
+      speak(
+        `Hi ${gameState.userName}, let's get started. First pick the game.`
+      );
     }
   };
-
-  recognition.onerror = (event) => {
-    console.error("Voice recognition error:", event.error);
+  recognition.onerror = () => {
     speak("Sorry, I didn't catch that. Please say your name again.");
-    setTimeout(() => listenForUserName(), 2000);
   };
-
-  recognition.onstart = () => {
-    console.log("Voice recognition started");
-    const speakBtn = document.getElementById("speak-name-btn");
-    if (speakBtn) {
-      speakBtn.textContent = "🎙️ Listening...";
-      speakBtn.disabled = true;
-    }
-  };
-
-  recognition.onend = () => {
-    console.log("Voice recognition ended");
-    const speakBtn = document.getElementById("speak-name-btn");
-    if (speakBtn) {
-      speakBtn.textContent = "🎤 Speak Name";
-      speakBtn.disabled = false;
-    }
-  };
-
   recognition.start();
 }
 
@@ -1027,23 +769,14 @@ function applyTheme(theme) {
 function initializeGame() {
   addEventListeners();
   showScreen("welcome-screen");
-  // Create simple gameStorage object for localStorage
-  gameStorage = {
-    getSettings: () => JSON.parse(localStorage.getItem("gameSettings") || "{}"),
-    saveSettings: (settings) =>
-      localStorage.setItem("gameSettings", JSON.stringify(settings)),
-    getGameStats: () => JSON.parse(localStorage.getItem("gameStats") || "{}"),
-    saveGameStats: (stats) =>
-      localStorage.setItem("gameStats", JSON.stringify(stats)),
-    settings: {},
-  };
+  gameStorage = window.AdditionGameStorage;
   console.log("Game Storage Loaded:", gameStorage);
   const defaultSettings = {
     soundEnabled: true,
     quietMode: false,
     theme: "auto",
     difficulty: "normal",
-    currentGame: 0,
+    gamegame: 0,
   };
   gameStorage.settings = {
     ...defaultSettings,
@@ -1069,17 +802,6 @@ function initializeGame() {
   // console.log("Loaded Game Stats:", gameState.stats);
   // settings = gameStorage.getSettings();
   updateUserNameDisplay();
-
-  // Load users into dropdown
-  loadUsersToDropdown();
-
-  // Check if user needs to be prompted for selection
-  if (!gameState.userName || gameState.userName === "No user selected") {
-    // Small delay to ensure dropdown is loaded first
-    setTimeout(() => {
-      promptForUserName();
-    }, 1000);
-  }
 
   // Welcome Screen Settings - Auto-save on change
   const quietMode = document.getElementById("quiet-mode");
@@ -1118,14 +840,6 @@ function initializeGame() {
       gameState.theme = e.target.value;
       applyTheme(e.target.value);
       gameStorage.saveSettings(gameState.settings);
-    });
-  }
-
-  // User Management Button
-  const userManagementBtn = document.getElementById("user-management-btn");
-  if (userManagementBtn) {
-    userManagementBtn.addEventListener("click", () => {
-      window.open("/user-management.html", "_blank");
     });
   }
 
@@ -1243,7 +957,7 @@ function stopSimpleAdditionAutoTest() {
 
 function addEventListeners() {
   // Attach event listeners
-  document.getElementById("beginners-screen").onclick = () =>
+  document.getElementById("beginners-mode-btn").onclick = () =>
     setbeginnersMode(!gameState.beginnersPracticeMode);
   document.querySelectorAll(".game-card").forEach((card) => {
     card.onclick = (e) => startgame(parseInt(e.currentTarget.dataset.game));
@@ -1377,41 +1091,6 @@ function addEventListeners() {
       clearUserName();
     });
   }
-
-  // Personalization: Speak Name button
-  const speakNameBtn = document.getElementById("speak-name-btn");
-  if (speakNameBtn) {
-    speakNameBtn.addEventListener("click", () => {
-      console.log("Speak name button clicked");
-      listenForUserName();
-    });
-  }
-
-  // User Selection Elements
-  const userSelect = document.getElementById("user-select");
-  if (userSelect) {
-    console.log("Adding change event listener to user-select dropdown");
-    userSelect.addEventListener("change", (e) => {
-      console.log("User selection changed to:", e.target.value);
-      selectUser(e.target.value);
-    });
-  } else {
-    console.log("ERROR: user-select element not found");
-  }
-
-  const newUserBtn = document.getElementById("new-user-btn");
-  if (newUserBtn) {
-    newUserBtn.addEventListener("click", () => {
-      createNewUser();
-    });
-  }
-
-  const refreshUsersBtn = document.getElementById("refresh-users-btn");
-  if (refreshUsersBtn) {
-    refreshUsersBtn.addEventListener("click", () => {
-      loadUsersToDropdown();
-    });
-  }
   document.querySelectorAll(".game-card").forEach((card) => {
     card.addEventListener("click", (e) => {
       const game = parseInt(e.currentTarget.dataset.game);
@@ -1419,6 +1098,3 @@ function addEventListeners() {
     });
   });
 }
-
-// Initialize the game when DOM is loaded
-document.addEventListener("DOMContentLoaded", initializeGame);

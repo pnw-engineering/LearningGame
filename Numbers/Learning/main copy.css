@@ -13,7 +13,7 @@ body {
   background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
   height: 100vh;
   overflow: hidden;
-  font-size: clamp(10px, 1.7vw, 32px);
+  font-size: clamp(10px, min(2vw, 2vh), 32px);
 }
 
 #app {
@@ -490,7 +490,44 @@ footer {
   display: grid;
   justify-content: center;
   align-items: center;
-  gap: 0.2em;
+  gap: 0.4em;
+}
+
+.user-selection-section {
+  display: grid;
+  gap: 0.3em;
+  text-align: center;
+}
+
+.user-selection-controls {
+  display: flex;
+  gap: 0.4em;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.user-dropdown {
+  font-size: 1em;
+  padding: 0.4em 0.6em;
+  border: 2px solid #3498db;
+  border-radius: 0.5em;
+  background: white;
+  color: #2c3e50;
+  min-width: 150px;
+  max-width: 200px;
+}
+
+.user-dropdown:focus {
+  outline: none;
+  border-color: #2980b9;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+.current-user-section {
+  display: grid;
+  gap: 0.3em;
+  text-align: center;
 }
 
 .user-name-display {
@@ -546,7 +583,7 @@ footer {
 }
 
 .game-icon {
-  font-size: 1.2em;
+  font-size: 2em;
   margin: 0;
 }
 

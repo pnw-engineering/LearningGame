@@ -37,17 +37,10 @@ frontend/
 └── images/
 ```
 
-## 🔧 Development Workflow
-
-1. **Use**: `index-dev.html` for all development
-2. **Standard F5 reload** should work (no complex cache busting)
-3. **Keep it simple** - traditional web development approaches
-4. **Test frequently** with simple reloads
-
 ## 🎮 Game Features
 
-- **Level 0**: Number recognition with text-to-speech
-- **Level 1**: Single digit addition
+- **beginners**: Number recognition with text-to-speech
+- **SimpleAddition**: Single digit addition
 - **Storage**: localStorage-based (AdditionGameStorage class)
 - **Audio**: Text-to-speech for accessibility
 - **UI**: Kid-friendly with large buttons and clear feedback
@@ -77,10 +70,8 @@ frontend/
 
 ## 📝 Future Enhancements
 
-- **Python backend** for more advanced features
 - **PWA capabilities** for offline use
-- **Additional math levels** (subtraction, multiplication)
-- **Progress tracking** and achievements
+- **Additional math games** (subtraction, multiplication)
 - **Sound effects** and animations
 
 ---
@@ -129,36 +120,39 @@ frontend/
 #### personalization
 
 - The users name should be shown. If not previously entered show "Not Entered".
-- If user name has not been entered, use tts to say: "Hi, I'm going to play some number games with you. What's your name?". Listen for the response and save the name. Repeat the name saying: "Hi {name} let's get started. First pick the level.".
+- If user name has not been entered, use tts to say: "Hi, I'm going to play some number games with you. What's your name?". Listen for the response and save the name. Repeat the name saying: "Hi {name} let's get started. First pick the game.".
 - The name should be persistant.
-- Disply the name on level 0 and level 1 screens.
+- Disply the name on beginners and SimpleAddition screens.
 - Provide a button to clear the name and ask for the name again.
 
 ## 🐍 Backend Guidelines
 
 ### Architecture
 
-- **Python with NumPy** for efficient numerical operations
 - **2D Matrix tracking** for adaptive problem selection
-- **RESTful API** design for frontend/backend communication
 - **Stateless operations** where possible for scalability
 
 ### Progress Tracking System
 
-- **2D Matrix Structure**: `progress[level][difficulty]` using NumPy arrays
-- **Level Dimensions**:
-  - Level 0 (Number Recognition): 10 difficulty levels
-  - Level 1 (Single Addition): 20 difficulty levels
-  - Level 2 (Double Addition): 30 difficulty levels
-- **Difficulty Progression**: Each level has increasing complexity ranges
+- **game Dimensions**:
+  - beginners (Number Recognition): 10 difficulty games
+  - SimpleAddition (Single Addition): 20 difficulty games
+  <!-- - game 2 (Double Addition): 30 difficulty games -->
+- **Difficulty Progression**: Each game has increasing complexity ranges
 - **Adaptive Selection**: Algorithm selects problems based on performance matrix
 
 ### Scoring Rules
 
-- **Correct Answer**: +2 points to difficulty level
-- **Incorrect Answer**: -1 point to difficulty level (minimum 0)
-- **Level Advancement**: Requires consistent high scores (≥75% correct) across difficulty range
-- **Problem Selection**: Weighted toward difficulty levels with lower scores
+- beginners:
+  - 1x10 arrays for Tries and Errors
+  - subtract the Errors array from the Tries array to form a **Selection array**
+  - randomly select to column index from the **Selection array** columns with the lowes values
+- SimpleAddition
+  - 10x10 arrays for Tries and Errors
+  - subtract the Errors Array from the Tries array to form a **Selection array**
+  - Select 2 numbers based on row and column idex of **Selection array**
+  - Randomly select the rows with the smallest sum of its columns (this is the row index)
+  - randomly select from the smallest values of the columns in that row.
 
 ### Data Management
 
@@ -172,11 +166,10 @@ frontend/
 - **GET /user/{id}/progress**: Retrieve current progress matrix
 - **POST /user/{id}/answer**: Submit answer and get next problem
 - **GET /user/{id}/stats**: Get performance analytics
-- **PUT /user/{id}/level**: Manual level adjustment (admin/debug)
+- **PUT /user/{id}/game**: Manual game adjustment (admin/debug)
 
 ### Error Handling
 
-- **Graceful Degradation**: Fallback to frontend-only mode if backend unavailable
 - **Input Validation**: Sanitize all user inputs and API parameters
 - **Logging**: Comprehensive error logging with user context
 - **Rate Limiting**: Prevent abuse while allowing natural learning pace
@@ -185,5 +178,4 @@ frontend/
 
 - **Response Time**: API calls < 100ms for real-time feel
 - **Concurrent Users**: Support multiple simultaneous learners
-- **Memory Efficiency**: Use NumPy arrays for optimal performance
 - **Database Design**: Efficient queries for progress retrieval/updates

@@ -56,7 +56,6 @@ class SimpleStorage {
       return false;
     }
   }
-  // ...existing code...
 }
 // Application-specific storage for Addition Game
 class AdditionGameStorage {
@@ -69,7 +68,6 @@ class AdditionGameStorage {
       achievements: "achievements",
     };
   }
-  // ...existing code...
 
   // Player name persistence
   getPlayerName() {
@@ -116,8 +114,8 @@ window.saveGameResult = (isCorrect, timeTaken) => {
 window.getGameStats = () => {
   return window.AdditionGameStorage.getGameStats();
 };
-window.getPlayerLevel = () => {
-  return window.AdditionGameStorage.getGameStats().level;
+window.getPlayergame = () => {
+  return window.AdditionGameStorage.getGameStats().game;
 };
 window.getPlayerPoints = () => {
   return window.AdditionGameStorage.getGameStats().points;

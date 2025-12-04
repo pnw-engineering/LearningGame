@@ -1,14 +1,189 @@
 // Addition Game - Function-Based Version
 // All game logic is implemented using simple functions and shared state objects
 
+// Elementary word dictionary for word recognition game
+const wordDictionary = {
+  easy: [
+    "cat",
+    "dog",
+    "sun",
+    "run",
+    "hat",
+    "bat",
+    "mat",
+    "sit",
+    "pot",
+    "top",
+    "big",
+    "red",
+    "get",
+    "pen",
+    "bed",
+    "hen",
+    "fun",
+    "cup",
+    "bug",
+    "hug",
+    "pig",
+    "dig",
+    "bag",
+    "rag",
+    "leg",
+    "egg",
+    "jet",
+    "wet",
+    "net",
+    "pet",
+    "hot",
+    "not",
+    "box",
+    "fox",
+    "can",
+    "man",
+    "fan",
+    "pan",
+    "pin",
+    "win",
+    "zip",
+    "lip",
+    "dip",
+    "hip",
+    "car",
+    "far",
+    "jar",
+    "bus",
+    "us",
+    "cut",
+  ],
+  medium: [
+    "ball",
+    "call",
+    "fall",
+    "wall",
+    "jump",
+    "pump",
+    "dump",
+    "camp",
+    "lamp",
+    "hand",
+    "sand",
+    "land",
+    "band",
+    "play",
+    "stay",
+    "gray",
+    "book",
+    "cook",
+    "look",
+    "took",
+    "fish",
+    "wish",
+    "dish",
+    "tree",
+    "free",
+    "feet",
+    "meet",
+    "rain",
+    "main",
+    "pain",
+    "train",
+    "duck",
+    "luck",
+    "truck",
+    "milk",
+    "silk",
+    "help",
+    "self",
+    "home",
+    "come",
+    "some",
+    "time",
+    "dime",
+    "like",
+    "bike",
+    "make",
+    "cake",
+    "lake",
+    "wake",
+    "blue",
+    "glue",
+    "true",
+    "moon",
+    "soon",
+  ],
+  hard: [
+    "apple",
+    "table",
+    "happy",
+    "funny",
+    "puppy",
+    "bunny",
+    "smile",
+    "snake",
+    "plane",
+    "train",
+    "brain",
+    "green",
+    "queen",
+    "sleep",
+    "sweet",
+    "three",
+    "seven",
+    "tiger",
+    "water",
+    "sister",
+    "brother",
+    "mother",
+    "father",
+    "school",
+    "friend",
+    "rainbow",
+    "garden",
+    "flower",
+    "yellow",
+    "purple",
+    "orange",
+    "monkey",
+    "turtle",
+    "rabbit",
+    "kitten",
+    "button",
+    "mitten",
+    "summer",
+    "winter",
+    "spring",
+    "circle",
+    "square",
+    "triangle",
+    "number",
+  ],
+};
+
 // Shared game state
 const gameState = {
   currentGame: 0,
   beginnersPracticeMode: true,
+  lettersPracticeMode: true,
+  wordsPracticeMode: true,
   stats: {
     beginners: { correct: 0, wrong: 0 },
     SimpleAddition: { correct: 0, wrong: 0 },
+    letters: { correct: 0, wrong: 0 },
+    words: { correct: 0, wrong: 0 },
   },
+  numberProgress: {
+    0: { correct: 0, hasError: false },
+    1: { correct: 0, hasError: false },
+    2: { correct: 0, hasError: false },
+    3: { correct: 0, hasError: false },
+    4: { correct: 0, hasError: false },
+    5: { correct: 0, hasError: false },
+    6: { correct: 0, hasError: false },
+    7: { correct: 0, hasError: false },
+    8: { correct: 0, hasError: false },
+    9: { correct: 0, hasError: false },
+  },
+  letterProgress: {},
   userName: localStorage.getItem("userName") || "",
   currentUserId: localStorage.getItem("currentUserId") || null,
   settings: {
@@ -51,6 +226,8 @@ function updateUserNameDisplay() {
     "user-name-display",
     "beginners-user-name",
     "SimpleAddition-user-name",
+    "letters-user-name",
+    "words-user-name",
   ].forEach((id) => {
     const el = document.getElementById(id);
     if (el) {
@@ -82,7 +259,7 @@ function setbeginnersMode(practice) {
   } else {
     // Test mode: always set a valid targetNumber
     gameState.currentProblem = {
-      targetNumber: Math.floor(Math.random() * 10),
+      targetNumber: selectNextNumber(),
     };
     if (instruction)
       instruction.textContent = `Find the number ${gameState.currentProblem.targetNumber}`;
@@ -334,24 +511,84 @@ function startgame(game) {
     showScreen("SimpleAddition-screen");
     initSimpleAddition();
   } else if (game === 2) {
-    showScreen("SimpleAddition-screen");
-    initSimpleAddition();
+    showScreen("letters-screen");
+    initletters();
   } else if (game === 3) {
-    showScreen("SimpleAddition-screen");
-    initSimpleAddition();
+    showScreen("wordRecognition");
+    initwords();
   }
 }
 
 function initbeginners() {
   // gameState.stats.beginners = { correct: 0, wrong: 0 };
+  loadNumberProgress();
   updatebeginnersDisplay();
   setbeginnersMode(gameState.beginnersPracticeMode);
-  // Hide scoring arrays by default
-  // document.querySelectorAll("#SimpleAddition-screen .scoring-display").forEach((el) => {
-  document.querySelectorAll(".scoring-display").forEach((el) => {
-    el.classList.add("hidden");
-  });
+  // Show scoring display for progress tracking on beginners screen
+  const beginnersScoring = document.querySelector(
+    "#beginners-screen .scoring-display"
+  );
+  if (beginnersScoring) {
+    beginnersScoring.classList.remove("hidden");
+  }
   gameState.autoTestMode = false;
+  // Greet user
+  if (
+    !gameState.settings.quietMode &&
+    gameState.userName &&
+    gameState.userName !== "No user selected"
+  ) {
+    speak(`Hi ${gameState.userName}! Welcome to Number Recognition!`);
+  }
+}
+
+function selectNextNumber() {
+  // Find the minimum number of correct answers
+  let minCorrect = Infinity;
+  for (let i = 0; i < 10; i++) {
+    if (gameState.numberProgress[i].correct < minCorrect) {
+      minCorrect = gameState.numberProgress[i].correct;
+    }
+  }
+
+  // Collect all numbers with the minimum correct count
+  const candidates = [];
+  for (let i = 0; i < 10; i++) {
+    if (gameState.numberProgress[i].correct === minCorrect) {
+      candidates.push(i);
+    }
+  }
+
+  // Randomly select from candidates
+  return candidates[Math.floor(Math.random() * candidates.length)];
+}
+
+function selectNextLetter() {
+  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+  // Find the minimum number of correct answers
+  let minCorrect = Infinity;
+  for (let i = 0; i < 26; i++) {
+    const letter = letters[i];
+    if (!gameState.letterProgress[letter]) {
+      gameState.letterProgress[letter] = { correct: 0, hasError: false };
+    }
+    if (gameState.letterProgress[letter].correct < minCorrect) {
+      minCorrect = gameState.letterProgress[letter].correct;
+    }
+  }
+
+  // Collect all letters with the minimum correct count
+  const candidates = [];
+  for (let i = 0; i < 26; i++) {
+    const letter = letters[i];
+    if (gameState.letterProgress[letter].correct === minCorrect) {
+      candidates.push(letter);
+    }
+  }
+
+  // Randomly select from candidates
+  return candidates[Math.floor(Math.random() * candidates.length)];
 }
 
 function updatebeginnersDisplay() {
@@ -367,6 +604,122 @@ function updatebeginnersDisplay() {
   if (correctEl) correctEl.textContent = gameState.stats.beginners.correct;
   if (wrongEl) wrongEl.textContent = gameState.stats.beginners.wrong;
   if (accuracyEl) accuracyEl.textContent = `${accuracy}%`;
+
+  // Update progress display
+  updateNumberProgressDisplay();
+}
+
+function updateNumberProgressDisplay() {
+  const hitsDisplay = document.getElementById("beginners-hits-display");
+  if (hitsDisplay) {
+    const progressArray = [];
+    for (let i = 0; i < 10; i++) {
+      const progress = gameState.numberProgress[i];
+      const status = progress.hasError
+        ? "❌"
+        : progress.correct >= 3
+        ? "✅"
+        : progress.correct;
+      progressArray.push(`${i}:${status}`);
+    }
+    hitsDisplay.textContent = `[${progressArray.join(", ")}]`;
+  }
+}
+
+function checkNumberMastery() {
+  for (let i = 0; i < 10; i++) {
+    const progress = gameState.numberProgress[i];
+    if (progress.correct < 3 || progress.hasError) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function saveNumberProgress() {
+  localStorage.setItem(
+    "numberProgress",
+    JSON.stringify(gameState.numberProgress)
+  );
+}
+
+function loadNumberProgress() {
+  const saved = localStorage.getItem("numberProgress");
+  if (saved) {
+    gameState.numberProgress = JSON.parse(saved);
+  }
+}
+
+function resetNumberProgress() {
+  for (let i = 0; i < 10; i++) {
+    gameState.numberProgress[i] = { correct: 0, hasError: false };
+  }
+  saveNumberProgress();
+  updateNumberProgressDisplay();
+}
+
+function updateLetterProgressDisplay() {
+  const hitsDisplay = document.getElementById("letters-hits-display");
+  if (hitsDisplay) {
+    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const progressArray = [];
+    for (let i = 0; i < 26; i++) {
+      const letter = letters[i];
+      if (!gameState.letterProgress[letter]) {
+        gameState.letterProgress[letter] = { correct: 0, hasError: false };
+      }
+      const progress = gameState.letterProgress[letter];
+      const status = progress.hasError
+        ? "❌"
+        : progress.correct >= 3
+        ? "✅"
+        : progress.correct;
+      progressArray.push(`${letter}:${status}`);
+    }
+    hitsDisplay.textContent = `[${progressArray.join(", ")}]`;
+  }
+}
+
+function checkLetterMastery() {
+  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  for (let i = 0; i < 26; i++) {
+    const letter = letters[i];
+    if (!gameState.letterProgress[letter]) return false;
+    const progress = gameState.letterProgress[letter];
+    if (progress.correct < 3 || progress.hasError) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function saveLetterProgress() {
+  localStorage.setItem(
+    "letterProgress",
+    JSON.stringify(gameState.letterProgress)
+  );
+}
+
+function loadLetterProgress() {
+  const saved = localStorage.getItem("letterProgress");
+  if (saved) {
+    gameState.letterProgress = JSON.parse(saved);
+  } else {
+    // Initialize all letters
+    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    for (let i = 0; i < 26; i++) {
+      gameState.letterProgress[letters[i]] = { correct: 0, hasError: false };
+    }
+  }
+}
+
+function resetLetterProgress() {
+  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  for (let i = 0; i < 26; i++) {
+    gameState.letterProgress[letters[i]] = { correct: 0, hasError: false };
+  }
+  saveLetterProgress();
+  updateLetterProgressDisplay();
 }
 
 function handlebeginnersPractice(number) {
@@ -382,20 +735,35 @@ function checkbeginnersAnswer(number) {
     !gameState.currentProblem ||
     typeof gameState.currentProblem.targetNumber !== "number"
   ) {
-    gameState.currentProblem = { targetNumber: Math.floor(Math.random() * 10) };
+    gameState.currentProblem = { targetNumber: selectNextNumber() };
   }
   const isCorrect = number === gameState.currentProblem.targetNumber;
+  const targetNum = gameState.currentProblem.targetNumber;
   const feedbackArea = document.getElementById("beginners-feedback-area");
   if (isCorrect) {
     gameState.stats.beginners.correct++;
+    // Track progress for this specific number
+    gameState.numberProgress[targetNum].correct++;
+
     if (feedbackArea) {
       feedbackArea.innerHTML = `<div class='feedback correct'>🎉 Correct! You found ${number}!</div>`;
     }
     if (!gameState.settings.quietMode) {
       speak(`Correct! You found ${number}`);
     }
+
+    // Check if all numbers have been mastered
+    if (checkNumberMastery()) {
+      if (feedbackArea) {
+        feedbackArea.innerHTML += `<div class='feedback mastery'>🌟 Amazing! You've mastered all numbers! 🌟</div>`;
+      }
+      if (!gameState.settings.quietMode) {
+        speak(`Amazing! You've mastered all numbers!`);
+      }
+    }
+
     // Generate next target number and prompt
-    gameState.currentProblem = { targetNumber: Math.floor(Math.random() * 10) };
+    gameState.currentProblem = { targetNumber: selectNextNumber() };
     const instruction = document.getElementById("beginners-instruction");
     if (instruction)
       instruction.textContent = `Find the number ${gameState.currentProblem.targetNumber}`;
@@ -403,6 +771,9 @@ function checkbeginnersAnswer(number) {
       speak(`Find the number ${gameState.currentProblem.targetNumber}`);
   } else {
     gameState.stats.beginners.wrong++;
+    // Mark this number as having an error
+    gameState.numberProgress[targetNum].hasError = true;
+
     if (feedbackArea) {
       feedbackArea.innerHTML = `<div class='feedback incorrect'>Try again! That was ${number}, but we're looking for ${gameState.currentProblem.targetNumber}.</div>`;
     }
@@ -414,7 +785,258 @@ function checkbeginnersAnswer(number) {
   }
   updatebeginnersDisplay();
   gameStorage.saveGameStats(gameState.stats);
+  saveNumberProgress();
   // console.log("beginners stats:", gameState.stats);
+}
+
+// Letters game functions (similar to beginners)
+function setlettersMode(practice) {
+  gameState.lettersPracticeMode = practice;
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
+  const btn = document.getElementById("letters-mode-btn");
+  const instruction = document.getElementById("letters-instruction");
+  if (btn) {
+    btn.textContent = practice
+      ? "Mode: Practice (Switch to Test Mode)"
+      : "Mode: Test (Switch to Practice Mode)";
+  }
+  if (practice) {
+    if (instruction)
+      instruction.textContent =
+        "Touch a letter and I will tell you what it is.";
+    if (!gameState.settings.quietMode)
+      speak("Touch a letter and I will tell you what it is.");
+  } else {
+    // Test mode: set a random target letter
+    const targetLetter = selectNextLetter();
+    gameState.currentProblem = { targetLetter };
+    if (instruction)
+      instruction.textContent = `Find the letter ${targetLetter}`;
+    if (!gameState.settings.quietMode) speak(`Find the letter ${targetLetter}`);
+  }
+}
+
+function initletters() {
+  loadLetterProgress();
+  updatelettersDisplay();
+  setlettersMode(gameState.lettersPracticeMode);
+  // Show scoring display for progress tracking on letters screen
+  const lettersScoring = document.querySelector(
+    "#letters-screen .scoring-display"
+  );
+  if (lettersScoring) {
+    lettersScoring.classList.remove("hidden");
+  }
+  // Greet user
+  if (
+    !gameState.settings.quietMode &&
+    gameState.userName &&
+    gameState.userName !== "No user selected"
+  ) {
+    speak(`Hi ${gameState.userName}! Welcome to Letter Recognition!`);
+  }
+}
+
+function updatelettersDisplay() {
+  const total = gameState.stats.letters.correct + gameState.stats.letters.wrong;
+  const accuracy =
+    total > 0
+      ? Math.round((gameState.stats.letters.correct / total) * 100)
+      : 100;
+  const correctEl = document.getElementById("letters-correct");
+  const wrongEl = document.getElementById("letters-wrong");
+  const accuracyEl = document.getElementById("letters-accuracy");
+  if (correctEl) correctEl.textContent = gameState.stats.letters.correct;
+  if (wrongEl) wrongEl.textContent = gameState.stats.letters.wrong;
+  if (accuracyEl) accuracyEl.textContent = `${accuracy}%`;
+
+  // Update progress display
+  updateLetterProgressDisplay();
+}
+
+function handlelettersPractice(letter) {
+  if (!gameState.settings.quietMode) {
+    speak(`That is ${letter}`);
+  }
+}
+
+function checklettersAnswer(letter) {
+  if (!gameState.currentProblem || !gameState.currentProblem.targetLetter) {
+    gameState.currentProblem = {
+      targetLetter: selectNextLetter(),
+    };
+  }
+  const isCorrect = letter === gameState.currentProblem.targetLetter;
+  const targetLetter = gameState.currentProblem.targetLetter;
+  const feedbackArea = document.getElementById("letters-feedback-area");
+  if (isCorrect) {
+    gameState.stats.letters.correct++;
+    // Track progress for this specific letter
+    if (!gameState.letterProgress[targetLetter]) {
+      gameState.letterProgress[targetLetter] = { correct: 0, hasError: false };
+    }
+    gameState.letterProgress[targetLetter].correct++;
+
+    if (feedbackArea) {
+      feedbackArea.innerHTML = `<div class='feedback correct'>🎉 Correct! You found ${letter}!</div>`;
+    }
+    if (!gameState.settings.quietMode) {
+      speak(`Correct! You found ${letter}`);
+    }
+
+    // Check if all letters have been mastered
+    if (checkLetterMastery()) {
+      if (feedbackArea) {
+        feedbackArea.innerHTML += `<div class='feedback mastery'>🌟 Amazing! You've mastered all letters! 🌟</div>`;
+      }
+      if (!gameState.settings.quietMode) {
+        speak(`Amazing! You've mastered all letters!`);
+      }
+    }
+
+    // Generate next target letter
+    gameState.currentProblem = {
+      targetLetter: selectNextLetter(),
+    };
+    const instruction = document.getElementById("letters-instruction");
+    if (instruction)
+      instruction.textContent = `Find the letter ${gameState.currentProblem.targetLetter}`;
+    if (!gameState.settings.quietMode)
+      speak(`Find the letter ${gameState.currentProblem.targetLetter}`);
+  } else {
+    gameState.stats.letters.wrong++;
+    // Mark this letter as having an error
+    if (!gameState.letterProgress[targetLetter]) {
+      gameState.letterProgress[targetLetter] = { correct: 0, hasError: false };
+    }
+    gameState.letterProgress[targetLetter].hasError = true;
+
+    if (feedbackArea) {
+      feedbackArea.innerHTML = `<div class='feedback incorrect'>Try again! That was ${letter}, but we're looking for ${gameState.currentProblem.targetLetter}.</div>`;
+    }
+    if (!gameState.settings.quietMode) {
+      speak(
+        `Try again! That was ${letter}, but we're looking for ${gameState.currentProblem.targetLetter}`
+      );
+    }
+  }
+  updatelettersDisplay();
+  gameStorage.saveGameStats(gameState.stats);
+  saveLetterProgress();
+}
+
+// Words game functions - always in test mode, asks user to select specific words
+function initwords() {
+  updatewordsDisplay();
+  document.querySelectorAll(".scoring-display").forEach((el) => {
+    el.classList.add("hidden");
+  });
+  // Greet user first, then set initial target word after greeting finishes
+  if (
+    !gameState.settings.quietMode &&
+    gameState.userName &&
+    gameState.userName !== "No user selected"
+  ) {
+    speak(`Hi ${gameState.userName}! Welcome to Word Recognition!`, () => {
+      generateNewWordChallenge();
+    });
+  } else {
+    generateNewWordChallenge();
+  }
+}
+
+function generateNewWordChallenge() {
+  // Clear any hint borders from previous challenge
+  document.querySelectorAll("#words-word-grid .word-tile").forEach((tile) => {
+    tile.style.border = "";
+  });
+
+  // Get difficulty setting (default to easy)
+  const difficulty = gameState.settings.difficulty || "easy";
+  const difficultyMap = {
+    easy: "easy",
+    normal: "medium",
+    medium: "medium",
+    hard: "hard",
+  };
+  const wordList =
+    wordDictionary[difficultyMap[difficulty]] || wordDictionary.easy;
+
+  // Select 4 random words for the options
+  const selectedWords = [];
+  const usedIndices = new Set();
+
+  while (selectedWords.length < 4 && selectedWords.length < wordList.length) {
+    const randomIndex = Math.floor(Math.random() * wordList.length);
+    if (!usedIndices.has(randomIndex)) {
+      usedIndices.add(randomIndex);
+      selectedWords.push(wordList[randomIndex]);
+    }
+  }
+
+  // Pick one of the 4 as the target
+  const targetWord =
+    selectedWords[Math.floor(Math.random() * selectedWords.length)];
+
+  // Update the word tiles with the selected words
+  const wordTiles = document.querySelectorAll("#words-word-grid .word-tile");
+  selectedWords.forEach((word, index) => {
+    if (wordTiles[index]) {
+      wordTiles[index].setAttribute("data-word", word);
+      const display = wordTiles[index].querySelector(".word-display");
+      if (display) display.textContent = word;
+    }
+  });
+
+  gameState.currentProblem = { targetWord, options: selectedWords };
+  const instruction = document.getElementById("words-instruction");
+  if (instruction)
+    instruction.textContent = `Listen and select the correct word.`;
+  if (!gameState.settings.quietMode) speak(`Find the word ${targetWord}`);
+}
+
+function updatewordsDisplay() {
+  const total = gameState.stats.words.correct + gameState.stats.words.wrong;
+  const accuracy =
+    total > 0 ? Math.round((gameState.stats.words.correct / total) * 100) : 100;
+  const correctEl = document.getElementById("words-correct");
+  const wrongEl = document.getElementById("words-wrong");
+  const accuracyEl = document.getElementById("words-accuracy");
+  if (correctEl) correctEl.textContent = gameState.stats.words.correct;
+  if (wrongEl) wrongEl.textContent = gameState.stats.words.wrong;
+  if (accuracyEl) accuracyEl.textContent = `${accuracy}%`;
+}
+
+function checkwordsAnswer(word) {
+  if (!gameState.currentProblem || !gameState.currentProblem.targetWord) {
+    generateNewWordChallenge();
+    return;
+  }
+  const isCorrect = word === gameState.currentProblem.targetWord;
+  const feedbackArea = document.getElementById("words-feedback-area");
+  if (isCorrect) {
+    gameState.stats.words.correct++;
+    if (feedbackArea) {
+      feedbackArea.innerHTML = `<div class='feedback correct'>🎉 Correct! You found ${word}!</div>`;
+    }
+    if (!gameState.settings.quietMode) {
+      speak(`Correct! You found ${word}`);
+    }
+    // Generate next target word
+    generateNewWordChallenge();
+  } else {
+    gameState.stats.words.wrong++;
+    if (feedbackArea) {
+      feedbackArea.innerHTML = `<div class='feedback incorrect'>Try again! That was ${word}, but we're looking for ${gameState.currentProblem.targetWord}.</div>`;
+    }
+    if (!gameState.settings.quietMode) {
+      speak(
+        `Try again! That was ${word}, but we're looking for ${gameState.currentProblem.targetWord}`
+      );
+    }
+  }
+  updatewordsDisplay();
+  gameStorage.saveGameStats(gameState.stats);
 }
 
 function initSimpleAddition() {
@@ -1054,6 +1676,8 @@ function initializeGame() {
   const defaultStats = {
     beginners: { correct: 0, wrong: 0 },
     SimpleAddition: { correct: 0, wrong: 0 },
+    letters: { correct: 0, wrong: 0 },
+    words: { correct: 0, wrong: 0 },
   };
 
   // Load stats from storage and merge with defaults
@@ -1064,6 +1688,8 @@ function initializeGame() {
       ...defaultStats.SimpleAddition,
       ...(loadedStats.SimpleAddition || {}),
     },
+    letters: { ...defaultStats.letters, ...(loadedStats.letters || {}) },
+    words: { ...defaultStats.words, ...(loadedStats.words || {}) },
   };
 
   // console.log("Loaded Game Stats:", gameState.stats);
@@ -1072,14 +1698,6 @@ function initializeGame() {
 
   // Load users into dropdown
   loadUsersToDropdown();
-
-  // Check if user needs to be prompted for selection
-  if (!gameState.userName || gameState.userName === "No user selected") {
-    // Small delay to ensure dropdown is loaded first
-    setTimeout(() => {
-      promptForUserName();
-    }, 1000);
-  }
 
   // Welcome Screen Settings - Auto-save on change
   const quietMode = document.getElementById("quiet-mode");
@@ -1129,11 +1747,6 @@ function initializeGame() {
     });
   }
 
-  // Automatically trigger voice input if no userName
-  if (!gameState.userName || gameState.userName === "Not Entered") {
-    listenForUserName();
-  }
-
   // Ensure interaction prompt overlay is visible and on top at page load
   const interactionPrompt = document.getElementById("interaction-prompt");
   if (interactionPrompt) {
@@ -1147,13 +1760,13 @@ function initializeGame() {
       interactionPrompt.style.pointerEvents = "none";
       interactionPrompt.style.visibility = "hidden";
       interactionPrompt.style.opacity = "0";
-      // Play welcome audio
+      // Trigger welcome speech after click
       if (!gameState.settings.quietMode) {
-        if (!gameState.userName || gameState.userName === "Not Entered") {
-          speak("Welcome! Please enter your name to begin.");
+        if (!gameState.userName || gameState.userName === "No user selected") {
+          promptForUserName();
         } else {
           speak(`Welcome back, ${gameState.userName}!`, () => {
-            speak("First, pick the game you want to play.");
+            speak("Pick the game you want to play.");
           });
         }
       }
@@ -1182,6 +1795,69 @@ function initializeGame() {
         }
       }
     };
+  }
+
+  // letters hint button
+  const lettersHintBtn = document.getElementById("letters-hint-btn");
+  if (lettersHintBtn) {
+    lettersHintBtn.onclick = () => {
+      document
+        .querySelectorAll("#letters-letter-grid .number-tile")
+        .forEach((tile) => {
+          tile.style.border = "";
+        });
+      if (gameState.currentProblem && gameState.currentProblem.targetLetter) {
+        const correctTile = document.querySelector(
+          `#letters-letter-grid .number-tile[data-letter='${gameState.currentProblem.targetLetter}']`
+        );
+        if (correctTile) {
+          correctTile.style.border = "1px solid red";
+        }
+      }
+    };
+  }
+
+  // letters reset button
+  const lettersResetBtn = document.getElementById("letters-reset-btn");
+  if (lettersResetBtn) {
+    lettersResetBtn.addEventListener("click", () => {
+      gameState.stats.letters.correct = 0;
+      gameState.stats.letters.wrong = 0;
+      resetLetterProgress();
+      updatelettersDisplay();
+      gameStorage.saveGameStats(gameState.stats);
+    });
+  }
+
+  // words hint button
+  const wordsHintBtn = document.getElementById("words-hint-btn");
+  if (wordsHintBtn) {
+    wordsHintBtn.onclick = () => {
+      document
+        .querySelectorAll("#words-word-grid .word-tile")
+        .forEach((tile) => {
+          tile.style.border = "";
+        });
+      if (gameState.currentProblem && gameState.currentProblem.targetWord) {
+        const correctTile = document.querySelector(
+          `#words-word-grid .word-tile[data-word='${gameState.currentProblem.targetWord}']`
+        );
+        if (correctTile) {
+          correctTile.style.border = "1px solid red";
+        }
+      }
+    };
+  }
+
+  // words reset button
+  const wordsResetBtn = document.getElementById("words-reset-btn");
+  if (wordsResetBtn) {
+    wordsResetBtn.addEventListener("click", () => {
+      gameState.stats.words.correct = 0;
+      gameState.stats.words.wrong = 0;
+      updatewordsDisplay();
+      gameStorage.saveGameStats(gameState.stats);
+    });
   }
 }
 // Start the app when DOM is ready
@@ -1243,8 +1919,14 @@ function stopSimpleAdditionAutoTest() {
 
 function addEventListeners() {
   // Attach event listeners
-  document.getElementById("beginners-screen").onclick = () =>
+  document.getElementById("beginners-mode-btn").onclick = () =>
     setbeginnersMode(!gameState.beginnersPracticeMode);
+
+  const lettersModeBtn = document.getElementById("letters-mode-btn");
+  if (lettersModeBtn) {
+    lettersModeBtn.onclick = () =>
+      setlettersMode(!gameState.lettersPracticeMode);
+  }
   document.querySelectorAll(".game-card").forEach((card) => {
     card.onclick = (e) => startgame(parseInt(e.currentTarget.dataset.game));
   });
@@ -1272,6 +1954,45 @@ function addEventListeners() {
   document.getElementById("SimpleAddition-back-btn").onclick = () =>
     showScreen("welcome-screen");
 
+  const lettersBackBtn = document.getElementById("letters-back-btn");
+  if (lettersBackBtn) {
+    lettersBackBtn.onclick = () => showScreen("welcome-screen");
+  }
+
+  const wordsBackBtn = document.getElementById("words-back-btn");
+  if (wordsBackBtn) {
+    wordsBackBtn.onclick = () => showScreen("welcome-screen");
+  }
+
+  // Letters letter tiles click handlers
+  document
+    .querySelectorAll("#letters-letter-grid .number-tile")
+    .forEach((tile) => {
+      tile.onclick = () => {
+        document
+          .querySelectorAll("#letters-letter-grid .number-tile")
+          .forEach((t) => {
+            t.style.border = "";
+          });
+        const letter = tile.getAttribute("data-letter");
+        if (gameState.lettersPracticeMode) {
+          handlelettersPractice(letter);
+        } else {
+          checklettersAnswer(letter);
+        }
+      };
+    });
+
+  // Words word tiles click handlers - always check answer (no practice mode)
+  document.querySelectorAll("#words-word-grid .word-tile").forEach((tile) => {
+    tile.onclick = () => {
+      document.querySelectorAll("#words-word-grid .word-tile").forEach((t) => {
+        t.style.border = "";
+      });
+      const word = tile.getAttribute("data-word");
+      checkwordsAnswer(word);
+    };
+  });
   const startAutoTestBtn = document.getElementById("start-auto-test-btn");
   if (startAutoTestBtn) {
     startAutoTestBtn.addEventListener("click", () => {
@@ -1320,6 +2041,7 @@ function addEventListeners() {
       gameState.stats.beginners.wrong = 0;
       // gameState.progressMatrix[0].tries = Array(10).fill(0);
       // gameState.progressMatrix[0].errors = Array(10).fill(0);
+      resetNumberProgress();
       updatebeginnersDisplay();
       updateScoringDisplays(0);
       gameStorage.saveGameStats(gameState.stats);
@@ -1419,6 +2141,3 @@ function addEventListeners() {
     });
   });
 }
-
-// Initialize the game when DOM is loaded
-document.addEventListener("DOMContentLoaded", initializeGame);

@@ -7,7 +7,9 @@
   </head>
   <body>
     <h1>Mode Button Test</h1>
-    <button id="level0-mode-btn">Mode: Practice (Switch to Test Mode)</button>
+    <button id="beginners-mode-btn">
+      Mode: Practice (Switch to Test Mode)
+    </button>
     <div id="test-results"></div>
 
     <script>
@@ -16,11 +18,11 @@
 
       // Simulate the game object
       const mockGame = {
-        level0PracticeMode: true,
-        setLevel0Mode: function (practice) {
-          console.log("setLevel0Mode called with practice:", practice);
-          this.level0PracticeMode = practice;
-          const btn = document.getElementById("level0-mode-btn");
+        beginnersPracticeMode: true,
+        setbeginnersMode: function (practice) {
+          console.log("setbeginnersMode called with practice:", practice);
+          this.beginnersPracticeMode = practice;
+          const btn = document.getElementById("beginners-mode-btn");
           if (btn) {
             btn.textContent = practice
               ? "Mode: Practice (Switch to Test Mode)"
@@ -37,32 +39,32 @@
       // Test the button click handler from init.js
       function testModeButton() {
         const results = document.getElementById("test-results");
-        const level0ModeBtn = document.getElementById("level0-mode-btn");
-        if (level0ModeBtn) {
+        const beginnersModeBtn = document.getElementById("beginners-mode-btn");
+        if (beginnersModeBtn) {
           results.innerHTML +=
-            "<p>Initial mode: " + mockGame.level0PracticeMode + "</p>";
+            "<p>Initial mode: " + mockGame.beginnersPracticeMode + "</p>";
           results.innerHTML +=
-            "<p>Initial button text: " + level0ModeBtn.textContent + "</p>";
+            "<p>Initial button text: " + beginnersModeBtn.textContent + "</p>";
 
           // Set up the onclick handler like in init.js
-          level0ModeBtn.onclick = () => {
+          beginnersModeBtn.onclick = () => {
             if (
               window.additionGame &&
-              typeof window.additionGame.level0PracticeMode !== "undefined"
+              typeof window.additionGame.beginnersPracticeMode !== "undefined"
             ) {
               console.log(
                 "Mode button clicked, current mode:",
-                window.additionGame.level0PracticeMode
+                window.additionGame.beginnersPracticeMode
               );
-              window.additionGame.setLevel0Mode(
-                !window.additionGame.level0PracticeMode
+              window.additionGame.setbeginnersMode(
+                !window.additionGame.beginnersPracticeMode
               );
               results.innerHTML +=
                 "<p>✅ Click detected! Mode toggled to: " +
-                window.additionGame.level0PracticeMode +
+                window.additionGame.beginnersPracticeMode +
                 "</p>";
               results.innerHTML +=
-                "<p>Button text: " + level0ModeBtn.textContent + "</p>";
+                "<p>Button text: " + beginnersModeBtn.textContent + "</p>";
             }
           };
 
